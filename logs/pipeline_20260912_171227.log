@@ -1,0 +1,811 @@
+2026-09-12 17:12:27,423 [INFO] pipeline: ╔══════════════════════════════════════════════════════════╗
+2026-09-12 17:12:27,424 [INFO] pipeline: ║  PIPELINE ETL — Recomendador de Revistas Científicas    ║
+2026-09-12 17:12:27,424 [INFO] pipeline: ║  Inicio: 2026-09-12 17:12:27                             ║
+2026-09-12 17:12:27,424 [INFO] pipeline: ╚══════════════════════════════════════════════════════════╝
+2026-09-12 17:12:27,424 [INFO] pipeline: ============================================================
+2026-09-12 17:12:27,424 [INFO] pipeline: VALIDACIÓN BRONZE
+2026-09-12 17:12:27,424 [INFO] pipeline: ============================================================
+2026-09-12 17:12:27,458 [INFO] pipeline:   ✓ publindex: 6276 filas, 34 columnas, 2,708,275 bytes
+2026-09-12 17:12:27,824 [INFO] pipeline:   ✓ doaj: 23305 filas, 52 columnas, 25,554,714 bytes
+2026-09-12 17:12:27,828 [INFO] pipeline:   ✓ scimago: 166 filas, 26 columnas, 57,736 bytes
+2026-09-12 17:12:27,829 [ERROR] pipeline:   ✗ openapc: contiene HTML (posible error de descarga)
+2026-09-12 17:12:27,829 [INFO] pipeline: 
+  Registro de validación: /home/vydi/recomendador_revistas/logs/bronze_validation.json
+2026-09-12 17:12:27,833 [INFO] pipeline: 
+============================================================
+2026-09-12 17:12:27,833 [INFO] pipeline: CAPA SILVER — Limpieza y normalización
+2026-09-12 17:12:27,834 [INFO] pipeline: ============================================================
+2026-09-12 17:12:27,834 [INFO] pipeline: 
+── Procesando Publindex ──
+2026-09-12 17:12:27,855 [INFO] etl_publindex: Leyendo CSV bronce: /home/vydi/recomendador_revistas/data/bronze/Revistas_Indexadas,_Índice_Nacional_Publindex_20260910.csv
+2026-09-12 17:12:27,969 [INFO] etl_publindex: Filas leídas: 6276 | Columnas: 34
+2026-09-12 17:12:27,970 [INFO] etl_publindex: Normalizando campos ISSN...
+2026-09-12 17:12:28,064 [WARNING] etl_publindex:   TXT_ISSN_P: 22 ISSN con checksum inválido de 6169 no nulos
+2026-09-12 17:12:28,076 [WARNING] etl_publindex:   TXT_ISSN_E: 18 ISSN con checksum inválido de 1432 no nulos
+2026-09-12 17:12:28,081 [INFO] etl_publindex: Calculando ISSN canónico (prioridad: ISSN-L > print > electronic)...
+2026-09-12 17:12:29,989 [INFO] etl_publindex: Filas sin ISSN válido: 0 (serán eliminadas)
+2026-09-12 17:12:29,992 [INFO] etl_publindex: Normalizando títulos...
+2026-09-12 17:12:30,052 [INFO] etl_publindex: Limpiando año de clasificación (NRO_ANO)...
+2026-09-12 17:12:30,064 [INFO] etl_publindex: Normalizando país a código ISO...
+2026-09-12 17:12:30,083 [INFO] etl_publindex: Renombrando columnas a esquema silver...
+2026-09-12 17:12:30,090 [INFO] etl_publindex: Deduplicando por issn_normalizado (conservar año más reciente)...
+2026-09-12 17:12:30,133 [INFO] etl_publindex:   Duplicados removidos: 5370 | Filas tras deduplicación: 906
+2026-09-12 17:12:30,133 [INFO] etl_publindex: Agregando metadatos de trazabilidad...
+2026-09-12 17:12:30,138 [INFO] etl_publindex: Calculando hash de registro...
+2026-09-12 17:12:30,171 [INFO] etl_publindex: Escribiendo parquet silver: /home/vydi/recomendador_revistas/data/silver/publindex_clean.parquet
+2026-09-12 17:12:30,209 [INFO] etl_publindex: ════════════════════════════════════════════════════════════
+2026-09-12 17:12:30,210 [INFO] etl_publindex: RESUMEN ETL PUBLINDEX
+2026-09-12 17:12:30,210 [INFO] etl_publindex: ════════════════════════════════════════════════════════════
+2026-09-12 17:12:30,210 [INFO] etl_publindex:   Filas entrada       : 6276
+2026-09-12 17:12:30,210 [INFO] etl_publindex:   Sin ISSN (eliminadas): 0
+2026-09-12 17:12:30,210 [INFO] etl_publindex:   Duplicados removidos : 5370
+2026-09-12 17:12:30,210 [INFO] etl_publindex:   Filas salida         : 906
+2026-09-12 17:12:30,211 [INFO] etl_publindex:   Nulos en issn_normalizado         :     0 (  0.0%)
+2026-09-12 17:12:30,212 [INFO] etl_publindex:   Nulos en titulo                   :     0 (  0.0%)
+2026-09-12 17:12:30,212 [INFO] etl_publindex:   Nulos en titulo_normalizado       :     0 (  0.0%)
+2026-09-12 17:12:30,213 [INFO] etl_publindex:   Nulos en anio_clasificacion       :     0 (  0.0%)
+2026-09-12 17:12:30,213 [INFO] etl_publindex:   Nulos en categoria_publindex      :     0 (  0.0%)
+2026-09-12 17:12:30,214 [INFO] etl_publindex:   Nulos en pais_iso                 :    86 (  9.5%)
+2026-09-12 17:12:30,215 [INFO] etl_publindex:   Distribución de categorías:
+2026-09-12 17:12:30,216 [INFO] etl_publindex:     C    : 551
+2026-09-12 17:12:30,216 [INFO] etl_publindex:     B    : 299
+2026-09-12 17:12:30,216 [INFO] etl_publindex:     A2   : 45
+2026-09-12 17:12:30,216 [INFO] etl_publindex:     A1   : 11
+2026-09-12 17:12:30,216 [INFO] etl_publindex: ════════════════════════════════════════════════════════════
+2026-09-12 17:12:30,216 [INFO] pipeline:   ✓ Publindex: 906 registros procesados
+2026-09-12 17:12:30,216 [INFO] pipeline: 
+── Procesando DOAJ ──
+2026-09-12 17:12:30,222 [INFO] etl_doaj: Leyendo archivo DOAJ: /home/vydi/recomendador_revistas/data/bronze/doaj_journalcsv_20260812_2320_utf8.csv
+2026-09-12 17:12:31,734 [INFO] etl_doaj:   CSV leído: 23305 filas × 52 columnas
+2026-09-12 17:12:31,739 [INFO] etl_doaj:   Columnas renombradas: 31 de 31 mapeadas
+2026-09-12 17:12:39,953 [INFO] etl_doaj:   ISSN normalizados — nulos: 0 (0.0%)
+2026-09-12 17:12:40,199 [INFO] etl_doaj:   Títulos normalizados — nulos: 7
+2026-09-12 17:12:40,238 [INFO] etl_doaj:   Países normalizados — nulos: 3668
+2026-09-12 17:12:40,515 [WARNING] normalize: Moneda no reconocida: YER
+2026-09-12 17:12:40,516 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,516 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,517 [WARNING] normalize: Moneda no reconocida: SYP
+2026-09-12 17:12:40,518 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,518 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,519 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,519 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,520 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,521 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,521 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,521 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,521 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,522 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,522 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,522 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,522 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,523 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,523 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,524 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,524 [WARNING] normalize: Moneda no reconocida: NPR
+2026-09-12 17:12:40,524 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,525 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,525 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,525 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,526 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,527 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,527 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,527 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,527 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,527 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,527 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,528 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,528 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,528 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,528 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,529 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,530 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,530 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,530 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,531 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,531 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,532 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,532 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,532 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,533 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,533 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,534 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,535 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,535 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,535 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,535 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,536 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,536 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,536 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,537 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,537 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,538 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,539 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,539 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,539 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,541 [WARNING] normalize: Moneda no reconocida: SYP
+2026-09-12 17:12:40,541 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,541 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,545 [WARNING] normalize: Moneda no reconocida: XAF
+2026-09-12 17:12:40,545 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,546 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,546 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,546 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,546 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,546 [WARNING] normalize: Moneda no reconocida: MAD
+2026-09-12 17:12:40,547 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,548 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,548 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,551 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,552 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,552 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,553 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,553 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,554 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,554 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,555 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,555 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,555 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,556 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,557 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,557 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,559 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,560 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,561 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,561 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,562 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,563 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,564 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,564 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,565 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,566 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,566 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,568 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,568 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,569 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,570 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,570 [WARNING] normalize: Moneda no reconocida: SYP
+2026-09-12 17:12:40,571 [WARNING] normalize: Moneda no reconocida: SYP
+2026-09-12 17:12:40,571 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,573 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,576 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,576 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,577 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,578 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,578 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,579 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,581 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,581 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,582 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,582 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,583 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,585 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,585 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,585 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,586 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,587 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,588 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,588 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,588 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,589 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,589 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,590 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,592 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,592 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,592 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,592 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,592 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,593 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,594 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,594 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,595 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,595 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,595 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,596 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,596 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,596 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,596 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,597 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,597 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,598 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,598 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,598 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,599 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,600 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,601 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,601 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,602 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,602 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,603 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,604 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,606 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,607 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,608 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,608 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,609 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,609 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,609 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,610 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,610 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,611 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,613 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,613 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,613 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,613 [WARNING] normalize: Moneda no reconocida: VND
+2026-09-12 17:12:40,614 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,614 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,615 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,618 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,619 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,619 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,620 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,623 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,628 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,629 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,629 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,629 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,629 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,631 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,631 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,632 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,632 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,632 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,633 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,633 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,633 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,634 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,634 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,635 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,635 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,635 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,637 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,638 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,638 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,638 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,639 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,640 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,641 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,641 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,642 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,642 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,642 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,643 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,643 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,643 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,644 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,644 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,645 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,645 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,645 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,646 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,649 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,650 [WARNING] normalize: Moneda no reconocida: MAD
+2026-09-12 17:12:40,650 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,651 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,651 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,653 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,653 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,654 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,655 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,655 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,657 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,657 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,658 [WARNING] normalize: Moneda no reconocida: NPR
+2026-09-12 17:12:40,659 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,660 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,661 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,662 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,662 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,663 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,664 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,664 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,664 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,665 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,665 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,665 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,665 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,666 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,666 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,666 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,667 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,668 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,669 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,669 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,670 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,670 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,670 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,671 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,671 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,671 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,672 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,673 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,674 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,674 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,674 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,675 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,675 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,675 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,675 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,676 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,678 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,678 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,679 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,679 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,679 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,680 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,680 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,681 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,681 [WARNING] normalize: Moneda no reconocida: YER
+2026-09-12 17:12:40,684 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,685 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,686 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,687 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,687 [WARNING] normalize: Moneda no reconocida: YER
+2026-09-12 17:12:40,688 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,688 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,688 [WARNING] normalize: Moneda no reconocida: VND
+2026-09-12 17:12:40,688 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,688 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,689 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,689 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,689 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,689 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,689 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,690 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,691 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,691 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,694 [WARNING] normalize: Moneda no reconocida: LYD
+2026-09-12 17:12:40,697 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,698 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,699 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,699 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,701 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,701 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,702 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,702 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,703 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,703 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,703 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,704 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,704 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,705 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,705 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,706 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,706 [WARNING] normalize: Moneda no reconocida: VND
+2026-09-12 17:12:40,706 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,707 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,707 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,708 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,708 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,710 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,710 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,711 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,712 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,713 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,713 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,715 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,715 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,716 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,716 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,717 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,717 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,718 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,718 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,719 [WARNING] normalize: Moneda no reconocida: SYP
+2026-09-12 17:12:40,722 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,723 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,724 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,724 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,727 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,729 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,731 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,733 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,733 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,734 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,735 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,735 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,736 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,737 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,742 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,744 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,744 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,745 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,746 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,747 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,748 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,749 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,750 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,752 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,752 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,755 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,758 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,761 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,762 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,763 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,764 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,765 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,766 [WARNING] normalize: Moneda no reconocida: GHS
+2026-09-12 17:12:40,768 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,769 [WARNING] normalize: Moneda no reconocida: VND
+2026-09-12 17:12:40,772 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,772 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,774 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,776 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,778 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,779 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,779 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,779 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,780 [WARNING] normalize: Moneda no reconocida: UGX
+2026-09-12 17:12:40,780 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,781 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,783 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,783 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,784 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,784 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,787 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,787 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,788 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,789 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,790 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,790 [WARNING] normalize: Moneda no reconocida: XAF
+2026-09-12 17:12:40,791 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,794 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,794 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,795 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,795 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,795 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,796 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,797 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,797 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,798 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,798 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,800 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,802 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,802 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,802 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,803 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,807 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,807 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,810 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,811 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,811 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,816 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,818 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,818 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,819 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,819 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,820 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,823 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,823 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,826 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,826 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,827 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,828 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,829 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,831 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,831 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,832 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,837 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,839 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,840 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,843 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,844 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,845 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,847 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,849 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,851 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,852 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,852 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,853 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,854 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,855 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,856 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,856 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,857 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,859 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,862 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,863 [WARNING] normalize: Moneda no reconocida: YER
+2026-09-12 17:12:40,865 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,868 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,869 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,870 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,870 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,872 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,874 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,875 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,876 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,876 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,877 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,879 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,881 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,888 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,895 [WARNING] normalize: Moneda no reconocida: MAD
+2026-09-12 17:12:40,898 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,904 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,904 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,904 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,905 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,905 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,905 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,905 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,905 [WARNING] normalize: Moneda no reconocida: NPR
+2026-09-12 17:12:40,906 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,906 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,911 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,911 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,913 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,913 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,913 [WARNING] normalize: Moneda no reconocida: XAF
+2026-09-12 17:12:40,913 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,914 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,914 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,914 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,915 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,916 [WARNING] normalize: Moneda no reconocida: YER
+2026-09-12 17:12:40,916 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,917 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,918 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,930 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,933 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,936 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,942 [WARNING] normalize: Moneda no reconocida: MAD
+2026-09-12 17:12:40,945 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,949 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,950 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,953 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,954 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,955 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,955 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,955 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,956 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,959 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,959 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,960 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,960 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,960 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,963 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,966 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,966 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,966 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,966 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,966 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,967 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,970 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,971 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,971 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,972 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,973 [WARNING] normalize: Moneda no reconocida: MNT
+2026-09-12 17:12:40,974 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,976 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,976 [WARNING] normalize: Moneda no reconocida: LYD
+2026-09-12 17:12:40,979 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,981 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,981 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,982 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,982 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,982 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,982 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,983 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,984 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,984 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,985 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,986 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,987 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:40,988 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,990 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,992 [WARNING] normalize: Moneda no reconocida: MAD
+2026-09-12 17:12:40,992 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,994 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:40,995 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,995 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,995 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,996 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,996 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,996 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,996 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,996 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,997 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:40,997 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,997 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:40,998 [WARNING] normalize: Moneda no reconocida: VND
+2026-09-12 17:12:41,002 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,003 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,003 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,003 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,004 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,005 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,007 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,007 [WARNING] normalize: Moneda no reconocida: YER
+2026-09-12 17:12:41,008 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,010 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,011 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,011 [WARNING] normalize: Moneda no reconocida: MAD
+2026-09-12 17:12:41,012 [WARNING] normalize: Moneda no reconocida: XOF
+2026-09-12 17:12:41,012 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,012 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:41,012 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,012 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,013 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,013 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,013 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,013 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,013 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,014 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:41,015 [WARNING] normalize: Moneda no reconocida: KPW
+2026-09-12 17:12:41,017 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:41,017 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,019 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,022 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,023 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,023 [WARNING] normalize: Moneda no reconocida: KZT
+2026-09-12 17:12:41,023 [WARNING] normalize: Moneda no reconocida: IQD
+2026-09-12 17:12:41,023 [WARNING] normalize: Moneda no reconocida: IRR
+2026-09-12 17:12:41,071 [INFO] etl_doaj:   APC convertidos a USD: 8084 registros
+2026-09-12 17:12:41,126 [INFO] etl_doaj:   Campos Yes/No convertidos a booleano: ['politica_plagio', 'autor_retiene_copyright', 'tiene_otros_cobros', 'politica_exencion', 'subscribe_to_open', 'cumple_oa_doaj', 'cc_legible_maquina']
+2026-09-12 17:12:41,217 [INFO] etl_doaj:   Fecha 'fecha_incorporacion_doaj' parseada — nulos: 0
+2026-09-12 17:12:41,277 [INFO] etl_doaj:   Fecha 'fecha_actualizacion_doaj' parseada — nulos: 0
+2026-09-12 17:12:41,338 [INFO] etl_doaj:   Fecha 'fecha_ultimo_articulo' parseada — nulos: 3836
+2026-09-12 17:12:41,605 [INFO] etl_doaj:   Deduplicación por ISSN: 1 duplicados eliminados
+2026-09-12 17:12:43,118 [INFO] etl_doaj:   Parquet guardado en: /home/vydi/recomendador_revistas/data/silver/doaj_clean.parquet
+2026-09-12 17:12:43,118 [INFO] etl_doaj: ============================================================
+2026-09-12 17:12:43,118 [INFO] etl_doaj:   RESUMEN ETL DOAJ
+2026-09-12 17:12:43,118 [INFO] etl_doaj: ============================================================
+2026-09-12 17:12:43,118 [INFO] etl_doaj:   Filas entrada:       23305
+2026-09-12 17:12:43,118 [INFO] etl_doaj:   Filas salida:        23304
+2026-09-12 17:12:43,118 [INFO] etl_doaj:   Duplicados removidos:1
+2026-09-12 17:12:43,119 [INFO] etl_doaj:   ISSN nulos:          0
+2026-09-12 17:12:43,119 [INFO] etl_doaj:   Títulos nulos:       7
+2026-09-12 17:12:43,120 [INFO] etl_doaj:   País ISO nulos:      3668
+2026-09-12 17:12:43,120 [INFO] etl_doaj:   APC en USD válidos:  8084
+2026-09-12 17:12:43,121 [INFO] etl_doaj:   tiene_apc True:      8662
+2026-09-12 17:12:43,121 [INFO] etl_doaj:   Columnas finales:    ['titulo', 'url_revista', 'url_doaj', 'When did the journal start to publish all content using an open license?', 'titulo_alternativo', 'issn_impreso', 'issn_electronico', 'palabras_clave', 'idiomas', 'editorial', 'pais_editorial', 'Other organisation', 'Country of other organisation', 'licencia', 'atributos_licencia', 'URL for license terms', 'cc_legible_maquina', 'autor_retiene_copyright', 'Copyright information URL', 'tipo_revision', 'Review process information URL', 'politica_plagio', "URL for journal's aims & scope", 'URL for the Editorial Board page', "URL for journal's instructions for authors", 'semanas_submission_publicacion', 'tiene_apc', 'APC information URL', 'politica_exencion', 'Waiver policy information URL', 'tiene_otros_cobros', 'Other fees information URL', 'servicios_preservacion', 'Preservation Service: national library', 'Preservation information URL', 'Deposit policy directory', 'URL for deposit policy', 'identificadores_persistentes', 'cumple_oa_doaj', 'Continues', 'Continued By', 'codigos_lcc', 'subscribe_to_open', 'Mirror Journal', 'Open Journals Collective', 'materias', 'fecha_incorporacion_doaj', 'fecha_actualizacion_doaj', 'Last Full Review Date', 'num_articulos', 'fecha_ultimo_articulo', 'issn_normalizado', 'titulo_normalizado', 'pais_iso', 'apc_monto', 'apc_moneda', 'apc_monto_usd', 'apc_tipo', '_fuente', '_fecha_captura', '_estado_calidad', '_hash_registro']
+2026-09-12 17:12:43,121 [INFO] etl_doaj: ============================================================
+2026-09-12 17:12:43,123 [INFO] pipeline:   ✓ DOAJ: 23304 registros procesados
+2026-09-12 17:12:43,124 [INFO] pipeline: 
+── Procesando Scimago ──
+2026-09-12 17:12:43,129 [INFO] etl_scimago: Leyendo CSV bronze: /home/vydi/recomendador_revistas/data/bronze/scimagojr 2025 CO.csv
+2026-09-12 17:12:43,135 [INFO] etl_scimago: Filas leídas: 166 | Columnas: 26
+2026-09-12 17:12:43,137 [INFO] etl_scimago: Columna Publisher duplicada eliminada (Publisher.1)
+2026-09-12 17:12:43,137 [INFO] etl_scimago: Parseando ISSNs...
+2026-09-12 17:12:43,143 [INFO] etl_scimago: ISSNs: print=166 | electronic=128 | normalizado nulos=0
+2026-09-12 17:12:43,144 [INFO] etl_scimago: Normalizando títulos...
+2026-09-12 17:12:43,146 [INFO] etl_scimago: Títulos normalizados: nulos=0
+2026-09-12 17:12:43,146 [INFO] etl_scimago: Convirtiendo campos numéricos (coma decimal)...
+2026-09-12 17:12:43,148 [INFO] etl_scimago:   SJR → sjr_score: nulos=0
+2026-09-12 17:12:43,150 [INFO] etl_scimago:   Citations / Doc. (2years) → citas_por_doc_2y: nulos=0
+2026-09-12 17:12:43,151 [INFO] etl_scimago:   Ref. / Doc. → refs_por_doc: nulos=0
+2026-09-12 17:12:43,154 [INFO] etl_scimago:   %Female → pct_female_raw: nulos=0
+2026-09-12 17:12:43,155 [INFO] etl_scimago: Convirtiendo campos enteros...
+2026-09-12 17:12:43,156 [INFO] etl_scimago:   Rank → rank_scimago: nulos=0
+2026-09-12 17:12:43,159 [INFO] etl_scimago:   H index → h_index: nulos=0
+2026-09-12 17:12:43,161 [INFO] etl_scimago:   Total Docs. (2025) → total_docs: nulos=0
+2026-09-12 17:12:43,163 [INFO] etl_scimago:   Total Docs. (3years) → total_docs_3y: nulos=0
+2026-09-12 17:12:43,165 [INFO] etl_scimago:   Total Refs. → total_refs: nulos=0
+2026-09-12 17:12:43,167 [INFO] etl_scimago:   Total Citations (3years) → total_citas_3y: nulos=0
+2026-09-12 17:12:43,170 [INFO] etl_scimago:   Citable Docs. (3years) → docs_citables_3y: nulos=0
+2026-09-12 17:12:43,172 [INFO] etl_scimago:   Overton → overton: nulos=0
+2026-09-12 17:12:43,172 [INFO] etl_scimago: Parseando categorías Scimago...
+2026-09-12 17:12:43,193 [INFO] etl_scimago: Cuartiles: distribución={'Q4': 69, 'Q3': 55, 'Q2': 32, 'Q1': 10} | nulos=0
+2026-09-12 17:12:43,193 [INFO] etl_scimago: Parseando áreas temáticas...
+2026-09-12 17:12:43,196 [INFO] etl_scimago: Convirtiendo campos booleanos...
+2026-09-12 17:12:43,199 [INFO] etl_scimago: Open Access: yes=158 | Diamond OA: yes=143
+2026-09-12 17:12:43,200 [INFO] etl_scimago: Convirtiendo %%Female a proporción decimal...
+2026-09-12 17:12:43,201 [INFO] etl_scimago: Normalizando país...
+2026-09-12 17:12:43,203 [INFO] etl_scimago: Renombrando columnas...
+2026-09-12 17:12:43,210 [INFO] etl_scimago: Deduplicación por issn_normalizado: 166 → 166 filas (-0 duplicados, 0 sin ISSN)
+2026-09-12 17:12:43,210 [INFO] etl_scimago: Agregando metadatos de trazabilidad...
+2026-09-12 17:12:43,223 [INFO] etl_scimago: ════════════════════════════════════════════════════════════
+2026-09-12 17:12:43,224 [INFO] etl_scimago: RESUMEN ETL SCIMAGO
+2026-09-12 17:12:43,224 [INFO] etl_scimago: ════════════════════════════════════════════════════════════
+2026-09-12 17:12:43,224 [INFO] etl_scimago:   Filas entrada (bronze) : 166
+2026-09-12 17:12:43,224 [INFO] etl_scimago:   Filas salida  (silver) : 166
+2026-09-12 17:12:43,224 [INFO] etl_scimago:   Columnas               : 33
+2026-09-12 17:12:43,225 [INFO] etl_scimago:   ISSNs nulos            : 0
+2026-09-12 17:12:43,226 [INFO] etl_scimago:   Títulos nulos          : 0
+2026-09-12 17:12:43,227 [INFO] etl_scimago:   SJR nulos              : 0
+2026-09-12 17:12:43,227 [INFO] etl_scimago:   Cuartil nulos          : 0
+2026-09-12 17:12:43,227 [INFO] etl_scimago:   Open Access            : 158 / 166
+2026-09-12 17:12:43,228 [INFO] etl_scimago:   Diamond OA             : 143 / 166
+2026-09-12 17:12:43,230 [INFO] etl_scimago:   Cuartiles              : {'Q4': 69, 'Q3': 55, 'Q2': 32, 'Q1': 10}
+2026-09-12 17:12:43,231 [INFO] etl_scimago:   Áreas únicas           : 53
+2026-09-12 17:12:43,231 [INFO] etl_scimago: ════════════════════════════════════════════════════════════
+2026-09-12 17:12:43,245 [INFO] pipeline:   ✓ Scimago: 166 registros procesados
+2026-09-12 17:12:43,245 [INFO] pipeline: 
+── Procesando OpenAPC ──
+2026-09-12 17:12:43,251 [WARNING] etl_openapc: OpenAPC no utilizable: OpenAPC contiene HTML/XML en lugar de un CSV
+2026-09-12 17:12:43,253 [WARNING] pipeline:   ⚠ OpenAPC: fuente no disponible o resultado vacío
+2026-09-12 17:12:43,253 [INFO] pipeline: 
+  Silver completado: 3 éxitos, 0 errores
+2026-09-12 17:12:43,253 [INFO] pipeline: 
+============================================================
+2026-09-12 17:12:43,253 [INFO] pipeline: CAPA GOLD — Integración y consolidación
+2026-09-12 17:12:43,253 [INFO] pipeline: ============================================================
+2026-09-12 17:12:43,265 [INFO] merge_gold: ============================================================
+2026-09-12 17:12:43,266 [INFO] merge_gold: INICIO: Merge Gold — Catálogo maestro de revistas
+2026-09-12 17:12:43,266 [INFO] merge_gold: ============================================================
+2026-09-12 17:12:43,266 [INFO] merge_gold: 
+1. Cargando datos silver...
+2026-09-12 17:12:43,304 [INFO] merge_gold:   publindex: 906 registros cargados
+2026-09-12 17:12:43,585 [INFO] merge_gold:   doaj: 23304 registros cargados
+2026-09-12 17:12:43,586 [WARNING] merge_gold:   scimago: archivo no encontrado en /home/vydi/recomendador_revistas/data/silver/scimago_clean.parquet
+2026-09-12 17:12:43,587 [WARNING] merge_gold:   openapc: archivo no encontrado en /home/vydi/recomendador_revistas/data/silver/openapc_clean.parquet
+2026-09-12 17:12:43,588 [INFO] merge_gold: 
+  Base inicial (Publindex): 906 registros
+2026-09-12 17:12:43,588 [INFO] merge_gold: 
+2. Merge con Scimago...
+2026-09-12 17:12:43,588 [INFO] merge_gold: 
+3. Merge con DOAJ...
+2026-09-12 17:12:43,653 [INFO] merge_gold:   Merge con doaj:
+2026-09-12 17:12:43,653 [INFO] merge_gold:     Coincidencias por ISSN: 323
+2026-09-12 17:12:43,653 [INFO] merge_gold:     Solo en base: 583
+2026-09-12 17:12:43,654 [INFO] merge_gold:     Solo en doaj: 22981
+2026-09-12 17:12:43,747 [INFO] merge_gold:   Registros tras merge DOAJ: 906
+2026-09-12 17:12:43,748 [INFO] merge_gold: 
+4. Merge con OpenAPC...
+2026-09-12 17:12:43,748 [INFO] merge_gold: 
+5. Resolviendo conflictos...
+2026-09-12 17:12:43,758 [INFO] merge_gold: 
+6. Consolidando fuentes...
+2026-09-12 17:12:43,808 [INFO] merge_gold: 
+6. Imputación de APC...
+2026-09-12 17:12:43,833 [INFO] merge_gold:   APC nulos antes: 903, después: 0
+2026-09-12 17:12:43,834 [INFO] merge_gold:   Valores imputados: 903
+2026-09-12 17:12:43,834 [INFO] merge_gold: 
+7. Detección de outliers en APC...
+2026-09-12 17:12:43,904 [INFO] merge_gold:   Outliers detectados: 2
+2026-09-12 17:12:43,905 [INFO] merge_gold: 
+8. Generando features...
+2026-09-12 17:12:44,017 [INFO] merge_gold: 
+9. Guardando catálogo gold...
+2026-09-12 17:12:44,044 [INFO] merge_gold:   Guardado: /home/vydi/recomendador_revistas/data/gold/catalogo_maestro_revistas.parquet
+2026-09-12 17:12:44,044 [INFO] merge_gold:   Registros finales: 906
+2026-09-12 17:12:44,044 [INFO] merge_gold:   Columnas: 87
+2026-09-12 17:12:44,135 [INFO] merge_gold:   CSV de referencia: /home/vydi/recomendador_revistas/data/gold/catalogo_maestro_revistas.csv
+2026-09-12 17:12:44,145 [INFO] merge_gold:   Features del modelo: /home/vydi/recomendador_revistas/data/gold/features_modelo.parquet (15 columnas)
+2026-09-12 17:12:44,251 [INFO] merge_gold:   Log de merge: /home/vydi/recomendador_revistas/data/silver/merge_log.csv (23304 entradas)
+2026-09-12 17:12:44,251 [INFO] merge_gold: 
+============================================================
+2026-09-12 17:12:44,251 [INFO] merge_gold: RESUMEN DEL CATÁLOGO MAESTRO
+2026-09-12 17:12:44,252 [INFO] merge_gold: ============================================================
+2026-09-12 17:12:44,252 [INFO] merge_gold:   Total revistas: 906
+2026-09-12 17:12:44,252 [INFO] merge_gold: 
+  Distribución por categoría Publindex:
+2026-09-12 17:12:44,253 [INFO] merge_gold:     C: 551
+2026-09-12 17:12:44,253 [INFO] merge_gold:     B: 299
+2026-09-12 17:12:44,253 [INFO] merge_gold:     A2: 45
+2026-09-12 17:12:44,253 [INFO] merge_gold:     A1: 11
+2026-09-12 17:12:44,254 [INFO] merge_gold: 
+  Revistas con APC: 3
+2026-09-12 17:12:44,254 [INFO] merge_gold: 
+  Distribución tipo APC:
+2026-09-12 17:12:44,255 [INFO] merge_gold:     imputado: 903
+2026-09-12 17:12:44,255 [INFO] merge_gold:     declarado: 3
+2026-09-12 17:12:44,255 [INFO] merge_gold: 
+  Cobertura por fuente:
+2026-09-12 17:12:44,255 [INFO] merge_gold:     publindex: 906 registros
+2026-09-12 17:12:44,256 [INFO] merge_gold: ============================================================
+2026-09-12 17:12:44,263 [INFO] pipeline:   ✓ Gold: 906 registros en catálogo maestro
+2026-09-12 17:12:44,266 [INFO] pipeline: 
+============================================================
+2026-09-12 17:12:44,266 [INFO] pipeline: RESUMEN FINAL DEL PIPELINE
+2026-09-12 17:12:44,266 [INFO] pipeline: ============================================================
+2026-09-12 17:12:44,266 [INFO] pipeline: 
+🥉 Bronze:
+2026-09-12 17:12:44,267 [INFO] pipeline:     Revistas_Indexadas,_Índice_Nacional_Publindex_20260910.csv: 2,708,275 bytes
+2026-09-12 17:12:44,267 [INFO] pipeline:     doaj_journalcsv_20260812_2320_utf8.csv: 25,554,714 bytes
+2026-09-12 17:12:44,267 [INFO] pipeline:     apc_de.csv: 470 bytes
+2026-09-12 17:12:44,267 [INFO] pipeline:     scimagojr 2025 CO.csv: 57,736 bytes
+2026-09-12 17:12:44,267 [INFO] pipeline: 
+🥈 Silver:
+2026-09-12 17:12:44,410 [INFO] pipeline:     doaj_clean.parquet: 23304 registros, 62 columnas
+2026-09-12 17:12:44,423 [INFO] pipeline:     publindex_clean.parquet: 906 registros, 26 columnas
+2026-09-12 17:12:44,423 [INFO] pipeline:     merge_log.csv: 1,207,965 bytes
+2026-09-12 17:12:44,423 [INFO] pipeline: 
+🥇 Gold:
+2026-09-12 17:12:44,446 [INFO] pipeline:     catalogo_maestro_revistas.parquet: 906 registros, 87 columnas
+2026-09-12 17:12:44,447 [INFO] pipeline:     catalogo_maestro_revistas.csv: 697,765 bytes
+2026-09-12 17:12:44,456 [INFO] pipeline:     features_modelo.parquet: 906 registros, 15 columnas
+2026-09-12 17:12:44,456 [INFO] pipeline: 
+Duración total: 17.0 segundos
+2026-09-12 17:12:44,456 [INFO] pipeline: Log guardado en: /home/vydi/recomendador_revistas/logs/pipeline_20260912_171227.log
+2026-09-12 17:12:44,456 [INFO] pipeline: 
+✓ Pipeline completado exitosamente.

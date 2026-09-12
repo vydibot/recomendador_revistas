@@ -1,0 +1,6 @@
+unidecode
+rapidfuzz
+pyarrow
+pandas
+numpy
+pytest

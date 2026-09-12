@@ -1,0 +1,44 @@
+{
+  "publindex": {
+    "archivo": "/home/vydi/recomendador_revistas/data/bronze/Revistas_Indexadas,_Índice_Nacional_Publindex_20260910.csv",
+    "existe": true,
+    "tamano_bytes": 2708275,
+    "hash_sha256": "0f77c2416473856f9c3b941814e01af6c2933e69bee875f2f07641ac3adaafef",
+    "header_valido": true,
+    "num_columnas": 34,
+    "num_filas_aprox": 6276,
+    "errores": []
+  },
+  "doaj": {
+    "archivo": "/home/vydi/recomendador_revistas/data/bronze/doaj_journalcsv_20260812_2320_utf8.csv",
+    "existe": true,
+    "tamano_bytes": 25554714,
+    "hash_sha256": "4f4690f440b6ef7a964ec0983610dbc378b1e2772de35b40d1372305421ed4b5",
+    "header_valido": true,
+    "num_columnas": 52,
+    "num_filas_aprox": 23305,
+    "errores": []
+  },
+  "scimago": {
+    "archivo": "/home/vydi/recomendador_revistas/data/bronze/scimagojr 2025 CO.csv",
+    "existe": true,
+    "tamano_bytes": 57736,
+    "hash_sha256": "f2642e57b141ceb36b80f507ad6ad99befedfe422b7742f917e7e9e9847dba4c",
+    "header_valido": true,
+    "num_columnas": 26,
+    "num_filas_aprox": 166,
+    "errores": []
+  },
+  "openapc": {
+    "archivo": "/home/vydi/recomendador_revistas/data/bronze/apc_de.csv",
+    "existe": true,
+    "tamano_bytes": 470,
+    "hash_sha256": null,
+    "header_valido": false,
+    "num_columnas": null,
+    "num_filas_aprox": null,
+    "errores": [
+      "El archivo contiene HTML en lugar de datos CSV"
+    ]
+  }
+}
