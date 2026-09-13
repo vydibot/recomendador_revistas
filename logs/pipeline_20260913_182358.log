@@ -1,0 +1,98 @@
+2026-09-13 18:23:58,778 [INFO] pipeline: ╔══════════════════════════════════════════════════════════╗
+2026-09-13 18:23:58,778 [INFO] pipeline: ║  PIPELINE ETL — Recomendador de Revistas Científicas    ║
+2026-09-13 18:23:58,779 [INFO] pipeline: ║  Versión: 1.0.0           Fecha: 2026-09-13 18:23:58       ║
+2026-09-13 18:23:58,779 [INFO] pipeline: ╚══════════════════════════════════════════════════════════╝
+2026-09-13 18:23:58,779 [INFO] pipeline: ============================================================
+2026-09-13 18:23:58,779 [INFO] pipeline: VALIDACIÓN BRONZE
+2026-09-13 18:23:58,779 [INFO] pipeline: ============================================================
+2026-09-13 18:23:58,820 [INFO] pipeline:   ✓ publindex: ~6276 filas, 34 columnas, sep=',', 2,708,275 bytes
+2026-09-13 18:23:58,830 [INFO] pipeline:   ✓ scimago: ~166 filas, 26 columnas, sep=';', 57,736 bytes
+2026-09-13 18:23:59,554 [INFO] pipeline:   ✓ doaj: ~23305 filas, 52 columnas, sep=',', 25,554,714 bytes
+2026-09-13 18:23:59,936 [INFO] pipeline:   ✓ openapc: ~268157 filas, 18 columnas, sep=',', 66,143,808 bytes
+2026-09-13 18:24:00,276 [INFO] pipeline:   ✓ facts: ~294449 filas, 14 columnas, sep=',', 49,082,441 bytes
+2026-09-13 18:24:00,277 [INFO] pipeline:   Registro de validación guardado en: /home/vydi/recomendador_revistas/logs/bronze_validation.json
+2026-09-13 18:24:00,285 [INFO] pipeline: 
+============================================================
+2026-09-13 18:24:00,285 [INFO] pipeline: CAPA SILVER — Limpieza y Normalización (Sección 8.1.1 & 8.1.2)
+2026-09-13 18:24:00,285 [INFO] pipeline: ============================================================
+2026-09-13 18:24:00,285 [INFO] pipeline: 
+── Procesando Publindex (MinCiencias) ──
+2026-09-13 18:24:00,318 [INFO] etl_publindex: Leyendo CSV bronce de Publindex: /home/vydi/recomendador_revistas/data/bronze/Revistas_Indexadas,_Índice_Nacional_Publindex_20260910.csv
+2026-09-13 18:24:00,472 [INFO] etl_publindex: Filas leídas: 6276 | Columnas: 34
+2026-09-13 18:24:00,473 [INFO] etl_publindex: Normalizando campos ISSN...
+2026-09-13 18:24:07,105 [INFO] etl_publindex: Duplicados removidos: 5370 | Filas restantes: 906
+2026-09-13 18:24:07,228 [INFO] etl_publindex: Parquet Silver guardado: /home/vydi/recomendador_revistas/data/silver/publindex_clean.parquet (906 registros)
+2026-09-13 18:24:07,229 [INFO] pipeline:   ✓ Publindex: 906 registros normalizados en Silver
+2026-09-13 18:24:07,229 [INFO] pipeline: 
+── Procesando Scimago Journal & Country Rank ──
+2026-09-13 18:24:07,231 [INFO] etl_scimago: Leyendo CSV bronze de Scimago: /home/vydi/recomendador_revistas/data/bronze/scimagojr 2025 CO.csv
+2026-09-13 18:24:07,240 [INFO] etl_scimago: Filas leídas: 166 | Columnas: 26
+2026-09-13 18:24:07,404 [INFO] etl_scimago: Parquet Silver guardado: /home/vydi/recomendador_revistas/data/silver/scimago_clean.parquet (166 filas)
+2026-09-13 18:24:07,405 [INFO] pipeline:   ✓ Scimago: 166 registros normalizados en Silver
+2026-09-13 18:24:07,406 [INFO] pipeline: 
+── Procesando DOAJ (Directory of Open Access Journals) ──
+2026-09-13 18:24:07,408 [INFO] etl_doaj: Leyendo archivo DOAJ: /home/vydi/recomendador_revistas/data/bronze/doaj_journalcsv_20260812_2320_utf8.csv
+2026-09-13 18:24:09,602 [INFO] etl_doaj: DOAJ leído: 23305 filas x 52 columnas
+2026-09-13 18:24:38,017 [INFO] etl_doaj: Tabla de conversión guardada: /home/vydi/recomendador_revistas/reports/tabla_conversion_monedas.csv (49 monedas)
+2026-09-13 18:24:38,675 [INFO] etl_doaj: DOAJ Parquet Silver guardado: /home/vydi/recomendador_revistas/data/silver/doaj_clean.parquet (23304 registros)
+2026-09-13 18:24:38,680 [INFO] pipeline:   ✓ DOAJ: 23304 registros normalizados en Silver
+2026-09-13 18:24:38,681 [INFO] pipeline: 
+── Procesando OpenAPC (Pagos observados) ──
+2026-09-13 18:25:03,682 [INFO] etl_openapc: openapc Silver guardado: /home/vydi/recomendador_revistas/data/silver/openapc_clean.parquet (12242 registros)
+2026-09-13 18:25:03,756 [INFO] pipeline:   ✓ OpenAPC: 12242 registros normalizados en Silver
+2026-09-13 18:25:03,756 [INFO] pipeline: 
+── Procesando Facts (Registro adicional de APC) ──
+2026-09-13 18:25:27,922 [INFO] etl_openapc: facts Silver guardado: /home/vydi/recomendador_revistas/data/silver/facts_clean.parquet (12583 registros)
+2026-09-13 18:25:27,976 [INFO] pipeline:   ✓ Facts: 12583 registros normalizados en Silver
+2026-09-13 18:25:27,976 [INFO] pipeline: 
+  Silver completado: 3 fuentes exitosas, 0 errores
+2026-09-13 18:25:27,977 [INFO] pipeline: 
+============================================================
+2026-09-13 18:25:27,977 [INFO] pipeline: CAPA GOLD — Integración, Imputación y Matriz de Features
+2026-09-13 18:25:27,977 [INFO] pipeline: ============================================================
+2026-09-13 18:25:27,979 [INFO] merge_gold: ============================================================
+2026-09-13 18:25:27,979 [INFO] merge_gold: INICIO: Consolidación Gold — Catálogo Maestro de Revistas
+2026-09-13 18:25:27,979 [INFO] merge_gold: ============================================================
+2026-09-13 18:25:28,021 [INFO] merge_gold:   publindex: 906 registros cargados desde publindex_clean.parquet
+2026-09-13 18:25:28,041 [INFO] merge_gold:   scimago: 166 registros cargados desde scimago_clean.parquet
+2026-09-13 18:25:28,281 [INFO] merge_gold:   doaj: 23304 registros cargados desde doaj_clean.parquet
+2026-09-13 18:25:28,325 [INFO] merge_gold:   facts: 12583 registros cargados desde facts_clean.parquet
+2026-09-13 18:25:28,373 [INFO] merge_gold:   openapc: 12242 registros cargados desde openapc_clean.parquet
+2026-09-13 18:25:28,374 [INFO] merge_gold: Base inicial (Publindex): 906 registros
+2026-09-13 18:25:28,429 [INFO] merge_gold:   Cruce con scimago: 148 coincidencias por ISSN primario
+2026-09-13 18:25:32,978 [INFO] merge_gold:   Cruce secundario por título con scimago: 189 matches adicionales
+2026-09-13 18:25:33,121 [INFO] merge_gold:   Cruce con doaj: 323 coincidencias por ISSN primario
+2026-09-13 18:26:52,346 [INFO] merge_gold:   Cruce secundario por título con doaj: 541 matches adicionales
+2026-09-13 18:26:52,424 [INFO] merge_gold:   Cruce con facts: 0 coincidencias por ISSN primario
+2026-09-13 18:27:52,052 [INFO] merge_gold:   Cruce secundario por título con facts: 381 matches adicionales
+2026-09-13 18:27:52,135 [INFO] merge_gold:   Cruce con openapc: 0 coincidencias por ISSN primario
+2026-09-13 18:28:51,093 [INFO] merge_gold:   Cruce secundario por título con openapc: 370 matches adicionales
+2026-09-13 18:28:51,096 [INFO] merge_gold: Resolviendo conflictos y precedencias...
+2026-09-13 18:28:51,807 [INFO] merge_gold: Generando variables derivadas, imputación y transformaciones continuas...
+2026-09-13 18:28:51,903 [INFO] merge_gold: Outliers detectados en APC (3*IQR): 1
+2026-09-13 18:28:51,914 [INFO] normalize: Iniciando imputación condicional de APC para 501 registros faltantes...
+2026-09-13 18:28:51,938 [INFO] normalize: Imputación por regresión condicional completada con éxito.
+2026-09-13 18:28:52,601 [INFO] merge_gold: Catálogo Maestro Parquet guardado: /home/vydi/recomendador_revistas/data/gold/catalogo_maestro_revistas.parquet (906 revistas)
+2026-09-13 18:28:52,602 [INFO] merge_gold: Catálogo Maestro CSV guardado: /home/vydi/recomendador_revistas/data/gold/catalogo_maestro_revistas.csv
+2026-09-13 18:28:52,602 [INFO] merge_gold: Generando matriz de características con One-Hot Encoding...
+2026-09-13 18:28:52,634 [INFO] merge_gold: Matriz de features del modelo guardada: /home/vydi/recomendador_revistas/data/gold/features_modelo.parquet (50 columnas)
+2026-09-13 18:28:52,651 [INFO] merge_gold: Log de cruces guardado en: /home/vydi/recomendador_revistas/data/silver/merge_log.csv (1952 entradas)
+2026-09-13 18:28:52,652 [INFO] merge_gold: ============================================================
+2026-09-13 18:28:52,652 [INFO] merge_gold: RESUMEN CATÁLOGO MAESTRO GOLD
+2026-09-13 18:28:52,652 [INFO] merge_gold: ============================================================
+2026-09-13 18:28:52,652 [INFO] merge_gold:   Total de revistas consolidadas : 906
+2026-09-13 18:28:52,653 [INFO] merge_gold:   Revistas con APC observado     : 380
+2026-09-13 18:28:52,654 [INFO] merge_gold:   Revistas con APC declarado     : 25
+2026-09-13 18:28:52,654 [INFO] merge_gold:   Revistas con APC imputado      : 501
+2026-09-13 18:28:52,655 [INFO] merge_gold:   Revistas con Acceso Diamante   : 266
+2026-09-13 18:28:52,655 [INFO] merge_gold:   Revistas con Exención LMIC     : 906
+2026-09-13 18:28:52,655 [INFO] merge_gold:   Revistas con Revisión Abierta  : 23
+2026-09-13 18:28:52,655 [INFO] merge_gold:   Revistas indexadas en DOAJ     : 864
+2026-09-13 18:28:52,655 [INFO] merge_gold: ============================================================
+2026-09-13 18:28:52,658 [INFO] pipeline:   ✓ Gold completado con éxito: 906 revistas en Catálogo Maestro
+2026-09-13 18:28:52,659 [INFO] pipeline: 
+============================================================
+2026-09-13 18:28:52,659 [INFO] pipeline: Duración total de ejecución: 293.88 segundos
+2026-09-13 18:28:52,660 [INFO] pipeline: Log del pipeline registrado en: /home/vydi/recomendador_revistas/logs/pipeline_20260913_182358.log
+2026-09-13 18:28:52,660 [INFO] pipeline: ============================================================
+2026-09-13 18:28:52,660 [INFO] pipeline: ✓ Pipeline finalizado exitosamente.

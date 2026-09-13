@@ -1,4 +1,5 @@
-"""Reporte de imputación APC y valores faltantes en la capa Gold.
+"""
+Reporte de auditoría de calidad, imputación de APC y completitud en la capa Gold.
 
 Uso:
     python codes/report_apc_gold.py
@@ -15,8 +16,8 @@ import json
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_PARQUET = PROJECT_ROOT / "data" / "gold" / "catalogo_maestro_revistas.parquet"
@@ -27,24 +28,29 @@ IDENTIFICATION_COLUMNS = [
     "issn_normalizado",
     "titulo",
     "titulo_normalizado",
+    "pais_iso",
+    "gran_area",
 ]
 APC_COLUMNS = [
     "apc_monto",
     "apc_moneda",
     "apc_monto_usd",
+    "apc_monto_ppp_usd",
     "apc_tipo",
+    "apc_imputado",
     "apc_metodo_imputacion",
+    "apc_es_outlier",
 ]
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Calcula imputación APC y faltantes por registro Gold."
+        description="Calcula auditoría de calidad, imputación APC y faltantes por registro Gold."
     )
     parser.add_argument(
         "--input",
         type=Path,
-        help="Archivo Gold .parquet o .csv. Por defecto se busca Parquet y luego CSV.",
+        help="Archivo Gold .parquet o .csv.",
     )
     parser.add_argument(
         "--output-dir",
@@ -93,30 +99,37 @@ def _missing_columns(row: pd.Series) -> list[str]:
 def build_report(
     df: pd.DataFrame,
 ) -> tuple[dict, pd.DataFrame, pd.DataFrame]:
-    missing_columns = [column for column in APC_COLUMNS if column not in df.columns]
-    if missing_columns:
-        raise ValueError(
-            "Faltan columnas APC obligatorias en Gold: "
-            + ", ".join(missing_columns)
-        )
-
     total_rows = len(df)
-    apc_type = df["apc_tipo"].astype("string").str.strip().str.lower()
-    imputed_mask = apc_type.eq("imputado")
-    classified_mask = apc_type.notna() & apc_type.ne("")
-    missing_apc_mask = df[APC_COLUMNS].isna().any(axis=1)
+    
+    # Flags de imputación y tipo
+    if "apc_imputado" in df.columns:
+        imputed_mask = df["apc_imputado"].fillna(False).astype(bool)
+    else:
+        imputed_mask = df["apc_tipo"].astype(str).str.lower().eq("imputado")
+
+    classified_mask = df["apc_tipo"].notna() if "apc_tipo" in df.columns else pd.Series(False, index=df.index)
+    
+    cols_check = [c for c in APC_COLUMNS if c in df.columns]
+    missing_apc_mask = df[cols_check].isna().any(axis=1) if cols_check else pd.Series(False, index=df.index)
 
     details = pd.DataFrame(index=df.index)
     for column in IDENTIFICATION_COLUMNS:
         if column in df.columns:
             details[column] = df[column]
     details["fila_gold"] = df.index + 2
-    details["apc_tipo"] = df["apc_tipo"]
-    details["apc_monto_usd"] = df["apc_monto_usd"]
+    if "apc_tipo" in df.columns:
+        details["apc_tipo"] = df["apc_tipo"]
+    if "apc_monto_usd" in df.columns:
+        details["apc_monto_usd"] = df["apc_monto_usd"]
+    if "apc_monto_ppp_usd" in df.columns:
+        details["apc_monto_ppp_usd"] = df["apc_monto_ppp_usd"]
     details["apc_imputado"] = imputed_mask
-    details["faltan_campos_apc"] = df[APC_COLUMNS].apply(
-        lambda row: ", ".join(_missing_columns(row)), axis=1
-    )
+    if "apc_es_outlier" in df.columns:
+        details["apc_es_outlier"] = df["apc_es_outlier"]
+    if cols_check:
+        details["faltan_campos_apc"] = df[cols_check].apply(
+            lambda row: ", ".join(_missing_columns(row)), axis=1
+        )
     details["faltan_campos_todos"] = df.apply(
         lambda row: ", ".join(_missing_columns(row)), axis=1
     )
@@ -144,13 +157,15 @@ def build_report(
         "registros_apc_clasificados": int(classified_mask.sum()),
         "registros_apc_imputados": int(imputed_mask.sum()),
         "registros_con_faltantes_apc": int(missing_apc_mask.sum()),
+        "registros_outliers_apc_3iqr": int(df["apc_es_outlier"].sum()) if "apc_es_outlier" in df.columns else 0,
         "porcentaje_imputados_sobre_total": round(
             100 * imputed_mask.sum() / total_rows, 2
         ) if total_rows else 0.0,
         "porcentaje_imputados_sobre_apc_clasificados": round(
             100 * imputed_mask.sum() / classified_mask.sum(), 2
         ) if classified_mask.sum() else 0.0,
-        "campos_apc_revisados": APC_COLUMNS,
+        "campos_apc_revisados": cols_check,
+        "metodos_imputacion": df["apc_metodo_imputacion"].value_counts().to_dict() if "apc_metodo_imputacion" in df.columns else {},
         "variables": variable_missing.to_dict(orient="records"),
     }
     return summary, details, variable_missing
@@ -183,10 +198,9 @@ def main() -> int:
     print(
         "APC imputados: "
         f"{summary['registros_apc_imputados']} "
-        f"({summary['porcentaje_imputados_sobre_total']:.2f}% del total; "
-        f"{summary['porcentaje_imputados_sobre_apc_clasificados']:.2f}% de APC clasificados)"
+        f"({summary['porcentaje_imputados_sobre_total']:.2f}% del total)"
     )
-    print(f"Registros con faltantes APC: {summary['registros_con_faltantes_apc']}")
+    print(f"Outliers APC (3*IQR): {summary['registros_outliers_apc_3iqr']}")
     print(f"Resumen: {summary_path}")
     print(f"Detalle por fila: {details_path}")
     print(f"Faltantes por variable: {variable_missing_path}")

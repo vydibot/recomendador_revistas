@@ -1,34 +1,50 @@
-"""ETL OpenAPC: pagos observados de APC a la capa silver.
+"""
+ETL OpenAPC: Pagos observados de APC y cargos de publicación institucional.
 
-El esquema de OpenAPC ha cambiado entre exportaciones. Este módulo acepta
-los nombres habituales de la fuente, normaliza ISSN y APC, y rechaza HTML o
-archivos sin columnas identificables para no convertir respuestas de error en
-datos.
+Lee el CSV bronce de OpenAPC, valida el formato, normaliza los ISSNs y montos de APC,
+convierte a USD preservando moneda y tasa original, calcula el valor equivalente en PPP USD,
+extrae el modelo de publicación (híbrido vs gold) y persiste en la capa silver con trazabilidad.
 """
 
 import logging
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
-from config import FECHA_CAPTURA, OPENAPC_FILE, OPENAPC_SILVER
-from normalize import convertir_a_usd, hash_registro, limpiar_issn
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from config import (
+    FACTS_FILE,
+    FACTS_SILVER,
+    FECHA_CAPTURA,
+    OPENAPC_FILE,
+    OPENAPC_SILVER,
+    VERSION_PROCESO,
+)
+from normalize import (
+    convertir_a_ppp_usd,
+    convertir_a_usd,
+    hash_registro,
+    limpiar_issn,
+    normalizar_titulo,
+    parsear_numero_es_en,
+)
 
-logger = logging.getLogger(__name__)
-
+logger = logging.getLogger("etl_openapc")
 
 _COLUMN_ALIASES = {
-    "issn_normalizado": ("issn", "journal_issn", "journal issn", "ISSN"),
+    "issn_normalizado": ("issn", "journal_issn", "journal issn", "ISSN", "issn_l", "issn_electronic", "issn_print"),
     "apc_monto": (
-        "apc", "apc_amount", "amount", "fee", "journal_fee", "journal_fees",
-        "amount_paid", "apc_amount_paid", "usd", "euro",
+        "euro", "apc", "apc_amount", "amount", "fee", "journal_fee", "journal_fees",
+        "amount_paid", "apc_amount_paid", "usd",
     ),
     "apc_moneda": ("currency", "apc_currency", "currency_code"),
     "titulo": (
-        "journal_name", "journal_full_title", "journal title", "title", "journal",
+        "journal_full_title", "journal_name", "journal title", "title", "journal",
     ),
     "editorial": ("publisher", "publisher_name"),
+    "is_hybrid": ("is_hybrid", "hybrid", "journal_type"),
 }
 
 
@@ -50,62 +66,100 @@ def _read_csv(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, dtype=str, sep=None, engine="python")
 
 
-def procesar_openapc() -> pd.DataFrame:
-    """Lee, valida y normaliza OpenAPC; guarda un parquet silver."""
-    if not OPENAPC_FILE.exists():
-        logger.warning("OpenAPC no encontrado: %s", OPENAPC_FILE)
+def _procesar_apc(path: Path, silver_path: Path, source_name: str) -> pd.DataFrame:
+    """Normaliza una fuente de pagos APC y la guarda en Silver."""
+    if not path.exists():
+        logger.warning("%s no encontrado: %s", source_name, path)
         return pd.DataFrame()
 
     try:
-        source = _read_csv(OPENAPC_FILE)
+        source = _read_csv(path)
     except (OSError, ValueError, pd.errors.ParserError) as exc:
-        logger.warning("OpenAPC no utilizable: %s", exc)
+        logger.warning("%s no utilizable: %s", source_name, exc)
         return pd.DataFrame()
 
     issn_col = _find_column(list(source.columns), _COLUMN_ALIASES["issn_normalizado"])
     amount_col = _find_column(list(source.columns), _COLUMN_ALIASES["apc_monto"])
     if not issn_col or not amount_col:
-        logger.warning("OpenAPC no tiene columnas de ISSN y APC reconocibles")
+        logger.warning("%s no contiene columnas identificables de ISSN y APC", source_name)
         return pd.DataFrame()
 
     result = pd.DataFrame(index=source.index)
     result["issn_normalizado"] = source[issn_col].apply(limpiar_issn)
-    result["apc_monto"] = pd.to_numeric(
-        source[amount_col].astype(str).str.replace(",", ".", regex=False),
-        errors="coerce",
-    )
+    result["apc_monto_original"] = source[amount_col].apply(parsear_numero_es_en)
+
     currency_col = _find_column(list(source.columns), _COLUMN_ALIASES["apc_moneda"])
-    result["apc_moneda"] = (
-        source[currency_col].str.upper().str.strip()
-        if currency_col
-        else ("EUR" if amount_col.strip().lower() == "euro" else "USD")
+    if currency_col:
+        result["apc_moneda_original"] = source[currency_col].str.upper().str.strip()
+    else:
+        result["apc_moneda_original"] = "EUR" if "euro" in amount_col.lower() else "USD"
+
+    usd_conv = result.apply(
+        lambda r: convertir_a_usd(r["apc_monto_original"], r["apc_moneda_original"]),
+        axis=1,
     )
-    result["apc_monto_usd"] = result.apply(
-        lambda row: convertir_a_usd(row["apc_monto"], row["apc_moneda"]), axis=1
+    result["apc_monto_usd"] = usd_conv.apply(lambda x: x[0])
+    result["tasa_usd_utilizada"] = usd_conv.apply(lambda x: x[1])
+
+    # Transformación PPP USD
+    result["apc_monto_ppp_usd"] = result["apc_monto_usd"].apply(
+        lambda x: convertir_a_ppp_usd(x, "DEFAULT")
     )
+
+    result["apc_monto"] = result["apc_monto_original"]
+    result["apc_moneda"] = result["apc_moneda_original"]
     result["apc_tipo"] = "observado"
 
+    # Título y editorial
     for target in ("titulo", "editorial"):
-        column = _find_column(list(source.columns), _COLUMN_ALIASES[target])
-        if column:
-            result[target] = source[column]
+        col = _find_column(list(source.columns), _COLUMN_ALIASES[target])
+        if col:
+            result[target] = source[col]
 
-    result = result.dropna(subset=["issn_normalizado", "apc_monto"]) \
-        .drop_duplicates("issn_normalizado") \
+    if "titulo" in result.columns:
+        result["titulo_normalizado"] = result["titulo"].apply(normalizar_titulo)
+
+    # Flag is_hybrid
+    hybrid_col = _find_column(list(source.columns), _COLUMN_ALIASES["is_hybrid"])
+    if hybrid_col:
+        result["is_hybrid"] = source[hybrid_col].str.strip().str.upper().isin(["TRUE", "1", "YES"])
+    else:
+        result["is_hybrid"] = False
+
+    # Deduplicación y filtrado
+    result = (
+        result.dropna(subset=["issn_normalizado", "apc_monto_usd"])
+        .drop_duplicates("issn_normalizado", keep="first")
         .reset_index(drop=True)
-    result["_fuente"] = "openapc"
+    )
+
+    # Metadatos de trazabilidad
+    result["_fuente"] = source_name.lower()
     result["_fecha_captura"] = FECHA_CAPTURA
+    result["_version_proceso"] = VERSION_PROCESO
     result["_estado_calidad"] = "normalizado"
     result["_hash_registro"] = result.apply(hash_registro, axis=1)
-    result.to_parquet(OPENAPC_SILVER, index=False, engine="pyarrow")
-    logger.info("OpenAPC: %d registros normalizados", len(result))
+
+    silver_path.parent.mkdir(parents=True, exist_ok=True)
+    result.to_parquet(silver_path, index=False, engine="pyarrow")
+    logger.info("%s Silver guardado: %s (%d registros)", source_name, silver_path, len(result))
     return result
 
 
+def procesar_openapc() -> pd.DataFrame:
+    """Lee, valida, normaliza OpenAPC y guarda el parquet Silver."""
+    return _procesar_apc(OPENAPC_FILE, OPENAPC_SILVER, "openapc")
+
+
+def procesar_facts() -> pd.DataFrame:
+    """Lee, valida, normaliza facts.csv y guarda el parquet Silver."""
+    return _procesar_apc(FACTS_FILE, FACTS_SILVER, "facts")
+
+
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     procesar_openapc()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     main()

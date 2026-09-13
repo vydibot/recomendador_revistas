@@ -1,0 +1,664 @@
+2026-09-13 16:47:24,481 [INFO] pipeline: ╔══════════════════════════════════════════════════════════╗
+2026-09-13 16:47:24,481 [INFO] pipeline: ║  PIPELINE ETL — Recomendador de Revistas Científicas    ║
+2026-09-13 16:47:24,482 [INFO] pipeline: ║  Versión: 1.0.0           Fecha: 2026-09-13 16:47:24       ║
+2026-09-13 16:47:24,482 [INFO] pipeline: ╚══════════════════════════════════════════════════════════╝
+2026-09-13 16:47:24,482 [INFO] pipeline: ============================================================
+2026-09-13 16:47:24,482 [INFO] pipeline: VALIDACIÓN BRONZE
+2026-09-13 16:47:24,482 [INFO] pipeline: ============================================================
+2026-09-13 16:47:24,522 [INFO] pipeline:   ✓ publindex: ~6276 filas, 34 columnas, sep=',', 2,708,275 bytes
+2026-09-13 16:47:24,532 [INFO] pipeline:   ✓ scimago: ~166 filas, 26 columnas, sep=';', 57,736 bytes
+2026-09-13 16:47:25,273 [INFO] pipeline:   ✓ doaj: ~23305 filas, 52 columnas, sep=',', 25,554,714 bytes
+2026-09-13 16:47:25,703 [INFO] pipeline:   ✓ openapc: ~268157 filas, 18 columnas, sep=',', 66,143,808 bytes
+2026-09-13 16:47:25,704 [INFO] pipeline:   Registro de validación guardado en: /home/vydi/recomendador_revistas/logs/bronze_validation.json
+2026-09-13 16:47:25,715 [INFO] pipeline: 
+============================================================
+2026-09-13 16:47:25,715 [INFO] pipeline: CAPA SILVER — Limpieza y Normalización (Sección 8.1.1 & 8.1.2)
+2026-09-13 16:47:25,715 [INFO] pipeline: ============================================================
+2026-09-13 16:47:25,715 [INFO] pipeline: 
+── Procesando Publindex (MinCiencias) ──
+2026-09-13 16:47:25,761 [INFO] etl_publindex: Leyendo CSV bronce de Publindex: /home/vydi/recomendador_revistas/data/bronze/Revistas_Indexadas,_Índice_Nacional_Publindex_20260910.csv
+2026-09-13 16:47:25,933 [INFO] etl_publindex: Filas leídas: 6276 | Columnas: 34
+2026-09-13 16:47:25,933 [INFO] etl_publindex: Normalizando campos ISSN...
+2026-09-13 16:47:29,059 [INFO] etl_publindex: Duplicados removidos: 5370 | Filas restantes: 906
+2026-09-13 16:47:29,129 [INFO] etl_publindex: Parquet Silver guardado: /home/vydi/recomendador_revistas/data/silver/publindex_clean.parquet (906 registros)
+2026-09-13 16:47:29,130 [INFO] pipeline:   ✓ Publindex: 906 registros normalizados en Silver
+2026-09-13 16:47:29,130 [INFO] pipeline: 
+── Procesando Scimago Journal & Country Rank ──
+2026-09-13 16:47:29,132 [INFO] etl_scimago: Leyendo CSV bronze de Scimago: /home/vydi/recomendador_revistas/data/bronze/scimagojr 2025 CO.csv
+2026-09-13 16:47:29,141 [INFO] etl_scimago: Filas leídas: 166 | Columnas: 26
+2026-09-13 16:47:29,296 [INFO] etl_scimago: Parquet Silver guardado: /home/vydi/recomendador_revistas/data/silver/scimago_clean.parquet (166 filas)
+2026-09-13 16:47:29,298 [INFO] pipeline:   ✓ Scimago: 166 registros normalizados en Silver
+2026-09-13 16:47:29,299 [INFO] pipeline: 
+── Procesando DOAJ (Directory of Open Access Journals) ──
+2026-09-13 16:47:29,305 [INFO] etl_doaj: Leyendo archivo DOAJ: /home/vydi/recomendador_revistas/data/bronze/doaj_journalcsv_20260812_2320_utf8.csv
+2026-09-13 16:47:31,188 [INFO] etl_doaj: DOAJ leído: 23305 filas x 52 columnas
+2026-09-13 16:47:47,915 [WARNING] normalize: Moneda 'YER' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,917 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,920 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,923 [WARNING] normalize: Moneda 'SYP' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,929 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,931 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,937 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,938 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,942 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,945 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,948 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,949 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,950 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,951 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,951 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,952 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,954 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,955 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,957 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,959 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,960 [WARNING] normalize: Moneda 'NPR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,961 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,961 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,962 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,963 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,964 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,966 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,967 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,968 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,969 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,969 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,969 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,969 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,971 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,972 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,972 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,973 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,977 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,979 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,980 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,980 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,981 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,984 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,985 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,986 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,986 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,987 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,990 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,990 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,991 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,991 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,992 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,993 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,994 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,994 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,995 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,997 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:47,998 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,000 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,001 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,001 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,004 [WARNING] normalize: Moneda 'SYP' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,005 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,005 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,017 [WARNING] normalize: Moneda 'XAF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,018 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,018 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,018 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,019 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,019 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,020 [WARNING] normalize: Moneda 'MAD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,020 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,023 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,025 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,031 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,032 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,033 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,035 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,036 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,037 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,037 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,039 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,039 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,039 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,043 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,044 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,045 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,051 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,054 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,056 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,056 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,058 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,060 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,064 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,064 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,066 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,067 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,067 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,068 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,069 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,069 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,071 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,072 [WARNING] normalize: Moneda 'SYP' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,072 [WARNING] normalize: Moneda 'SYP' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,072 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,074 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,078 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,079 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,079 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,080 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,081 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,082 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,082 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,083 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,084 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,084 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,085 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,088 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,088 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,089 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,090 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,092 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,093 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,093 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,093 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,094 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,094 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,095 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,096 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,097 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,097 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,097 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,097 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,098 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,099 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,100 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,100 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,101 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,101 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,102 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,102 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,103 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,103 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,104 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,105 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,106 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,106 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,106 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,107 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,109 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,110 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,111 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,112 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,112 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,114 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,115 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,119 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,120 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,122 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,122 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,123 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,124 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,124 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,125 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,126 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,127 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,133 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,133 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,134 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,135 [WARNING] normalize: Moneda 'VND' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,135 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,137 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,139 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,144 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,146 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,147 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,148 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,154 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,163 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,164 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,164 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,164 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,164 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,166 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,167 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,168 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,169 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,169 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,169 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,170 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,170 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,171 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,172 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,173 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,173 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,174 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,177 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,177 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,178 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,179 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,180 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,180 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,182 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,182 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,183 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,184 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,184 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,185 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,186 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,186 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,187 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,188 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,189 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,189 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,190 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,191 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,196 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,197 [WARNING] normalize: Moneda 'MAD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,198 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,199 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,199 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,201 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,203 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,204 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,205 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,205 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,207 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,207 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,209 [WARNING] normalize: Moneda 'NPR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,210 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,212 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,212 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,213 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,214 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,214 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,215 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,216 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,217 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,218 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,218 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,218 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,218 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,220 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,221 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,221 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,223 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,225 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,225 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,226 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,226 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,227 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,228 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,228 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,230 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,231 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,231 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,235 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,237 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,238 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,239 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,239 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,240 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,240 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,241 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,243 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,248 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,249 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,250 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,252 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,252 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,254 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,255 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,255 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,255 [WARNING] normalize: Moneda 'YER' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,260 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,261 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,262 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,264 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,265 [WARNING] normalize: Moneda 'YER' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,266 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,266 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,266 [WARNING] normalize: Moneda 'VND' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,266 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,266 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,267 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,267 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,268 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,268 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,268 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,270 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,271 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,271 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,275 [WARNING] normalize: Moneda 'LYD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,279 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,280 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,281 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,281 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,283 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,283 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,284 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,285 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,286 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,286 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,286 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,288 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,288 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,289 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,290 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,292 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,292 [WARNING] normalize: Moneda 'VND' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,293 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,293 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,294 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,296 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,297 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,300 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,302 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,303 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,305 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,306 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,307 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,309 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,310 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,310 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,310 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,311 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,312 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,312 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,312 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,313 [WARNING] normalize: Moneda 'SYP' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,317 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,318 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,319 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,320 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,323 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,325 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,328 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,329 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,330 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,331 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,331 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,332 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,332 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,334 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,338 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,340 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,341 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,341 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,343 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,343 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,344 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,345 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,346 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,348 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,349 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,351 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,354 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,357 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,358 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,359 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,360 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,361 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,363 [WARNING] normalize: Moneda 'GHS' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,365 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,366 [WARNING] normalize: Moneda 'VND' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,368 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,369 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,370 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,372 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,374 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,375 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,375 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,375 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,376 [WARNING] normalize: Moneda 'UGX' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,376 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,377 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,379 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,380 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,380 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,381 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,383 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,383 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,384 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,385 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,386 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,386 [WARNING] normalize: Moneda 'XAF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,387 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,389 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,390 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,390 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,391 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,391 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,392 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,393 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,393 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,394 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,394 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,396 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,398 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,398 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,399 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,400 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,404 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,405 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,409 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,409 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,409 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,415 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,418 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,419 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,420 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,421 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,421 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,424 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,428 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,435 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,436 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,438 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,440 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,443 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,445 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,446 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,448 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,453 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,455 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,456 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,459 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,459 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,460 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,463 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,464 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,468 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,469 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,469 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,470 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,471 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,473 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,473 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,473 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,473 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,476 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,480 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,481 [WARNING] normalize: Moneda 'YER' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,483 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,485 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,486 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,486 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,487 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,489 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,491 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,492 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,492 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,493 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,494 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,495 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,496 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,502 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,509 [WARNING] normalize: Moneda 'MAD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,514 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,520 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,520 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,521 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,521 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,521 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,521 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,522 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,522 [WARNING] normalize: Moneda 'NPR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,524 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,525 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,531 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,532 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,534 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,535 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,535 [WARNING] normalize: Moneda 'XAF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,536 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,537 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,537 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,537 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,538 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,540 [WARNING] normalize: Moneda 'YER' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,541 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,542 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,544 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,559 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,562 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,565 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,576 [WARNING] normalize: Moneda 'MAD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,581 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,587 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,588 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,591 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,593 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,593 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,593 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,594 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,595 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,599 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,600 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,601 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,602 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,602 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,606 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,610 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,611 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,611 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,612 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,612 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,614 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,618 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,619 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,620 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,620 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,622 [WARNING] normalize: Moneda 'MNT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,623 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,625 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,626 [WARNING] normalize: Moneda 'LYD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,629 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,633 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,633 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,635 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,635 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,636 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,636 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,639 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,640 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,641 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,641 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,643 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,644 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,647 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,653 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,656 [WARNING] normalize: Moneda 'MAD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,657 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,660 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,661 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,662 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,662 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,663 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,664 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,664 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,664 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,665 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,667 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,667 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,668 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,669 [WARNING] normalize: Moneda 'VND' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,676 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,677 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,677 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,678 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,679 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,680 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,683 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,684 [WARNING] normalize: Moneda 'YER' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,686 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,689 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,690 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,691 [WARNING] normalize: Moneda 'MAD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,691 [WARNING] normalize: Moneda 'XOF' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,692 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,692 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,692 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,693 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,693 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,693 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,693 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,693 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,694 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,696 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,696 [WARNING] normalize: Moneda 'KPW' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,699 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,700 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,702 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,707 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,707 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,708 [WARNING] normalize: Moneda 'KZT' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,708 [WARNING] normalize: Moneda 'IQD' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:48,709 [WARNING] normalize: Moneda 'IRR' no encontrada en tabla de tasas de cambio
+2026-09-13 16:47:52,630 [INFO] etl_doaj: DOAJ Parquet Silver guardado: /home/vydi/recomendador_revistas/data/silver/doaj_clean.parquet (23304 registros)
+2026-09-13 16:47:52,632 [INFO] pipeline:   ✓ DOAJ: 23304 registros normalizados en Silver
+2026-09-13 16:47:52,633 [INFO] pipeline: 
+── Procesando OpenAPC (Pagos observados) ──
+2026-09-13 16:48:08,906 [INFO] etl_openapc: OpenAPC Silver guardado: /home/vydi/recomendador_revistas/data/silver/openapc_clean.parquet (12242 registros)
+2026-09-13 16:48:08,931 [INFO] pipeline:   ✓ OpenAPC: 12242 registros normalizados en Silver
+2026-09-13 16:48:08,931 [INFO] pipeline: 
+  Silver completado: 3 fuentes exitosas, 0 errores
+2026-09-13 16:48:08,932 [INFO] pipeline: 
+============================================================
+2026-09-13 16:48:08,932 [INFO] pipeline: CAPA GOLD — Integración, Imputación y Matriz de Features
+2026-09-13 16:48:08,932 [INFO] pipeline: ============================================================
+2026-09-13 16:48:08,945 [INFO] merge_gold: ============================================================
+2026-09-13 16:48:08,946 [INFO] merge_gold: INICIO: Consolidación Gold — Catálogo Maestro de Revistas
+2026-09-13 16:48:08,946 [INFO] merge_gold: ============================================================
+2026-09-13 16:48:08,989 [INFO] merge_gold:   publindex: 906 registros cargados desde publindex_clean.parquet
+2026-09-13 16:48:09,007 [INFO] merge_gold:   scimago: 166 registros cargados desde scimago_clean.parquet
+2026-09-13 16:48:09,144 [INFO] merge_gold:   doaj: 23304 registros cargados desde doaj_clean.parquet
+2026-09-13 16:48:09,175 [INFO] merge_gold:   openapc: 12242 registros cargados desde openapc_clean.parquet
+2026-09-13 16:48:09,176 [INFO] merge_gold: Base inicial (Publindex): 906 registros
+2026-09-13 16:48:09,209 [INFO] merge_gold:   Cruce con scimago: 148 coincidencias por ISSN primario
+2026-09-13 16:48:12,719 [INFO] merge_gold:   Cruce secundario por título con scimago: 189 matches adicionales
+2026-09-13 16:48:12,911 [INFO] merge_gold:   Cruce con doaj: 323 coincidencias por ISSN primario
+2026-09-13 16:49:11,065 [INFO] merge_gold:   Cruce secundario por título con doaj: 541 matches adicionales
+2026-09-13 16:49:11,208 [INFO] merge_gold:   Cruce con openapc: 0 coincidencias por ISSN primario
+2026-09-13 16:49:51,867 [INFO] merge_gold:   Cruce secundario por título con openapc: 521 matches adicionales
+2026-09-13 16:49:51,889 [INFO] merge_gold: Resolviendo conflictos y precedencias...
+2026-09-13 16:49:52,258 [INFO] merge_gold: Generando variables derivadas, imputación y transformaciones continuas...
+2026-09-13 16:49:52,335 [INFO] merge_gold: Outliers detectados en APC (3*IQR): 3
+2026-09-13 16:49:52,341 [ERROR] pipeline:   ✗ Gold error: "value" parameter must be a scalar, dict or Series, but you passed a "ndarray"
+Traceback (most recent call last):
+  File "/home/vydi/recomendador_revistas/codes/pipeline.py", line 252, in ejecutar_gold
+    catalogo = merge_gold()
+               ^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/codes/merge_gold.py", line 406, in merge_gold
+    catalogo = calcular_features_avanzadas(catalogo)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/codes/merge_gold.py", line 300, in calcular_features_avanzadas
+    df = imputar_apc(
+         ^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/codes/normalize.py", line 429, in imputar_apc
+    df["apc_tipo"] = df["apc_tipo"].fillna(
+                     ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/generic.py", line 7068, in fillna
+    raise TypeError(
+TypeError: "value" parameter must be a scalar, dict or Series, but you passed a "ndarray"
+2026-09-13 16:49:52,354 [INFO] pipeline: 
+============================================================
+2026-09-13 16:49:52,355 [INFO] pipeline: Duración total de ejecución: 147.87 segundos
+2026-09-13 16:49:52,355 [INFO] pipeline: Log del pipeline registrado en: /home/vydi/recomendador_revistas/logs/pipeline_20260913_164724.log
+2026-09-13 16:49:52,355 [INFO] pipeline: ============================================================
+2026-09-13 16:49:52,356 [ERROR] pipeline: ✗ Pipeline finalizado con errores.

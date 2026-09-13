@@ -1,6 +1,6 @@
 # Recomendador de revistas
 
-Pipeline ETL medallion para consolidar Publindex, DOAJ, Scimago y OpenAPC.
+Pipeline ETL medallion para consolidar Publindex, DOAJ, Scimago, OpenAPC y el registro Facts de pagos APC.
 
 ## Instalacion
 
@@ -22,10 +22,13 @@ Desde la raiz del proyecto:
 .venv/bin/python codes/report_apc_gold.py
 ```
 
-Las capas se escriben en `data/silver/` y `data/gold/`. OpenAPC es opcional:
+Las capas se escriben en `data/silver/` y `data/gold`. OpenAPC y Facts son opcionales:
 si el archivo no existe o contiene una respuesta HTML/HTTP, se registra como
-fuente no disponible y no bloquea el catálogo con las otras fuentes. Cuando es
-válido, sus pagos observados tienen precedencia sobre APC declarados de DOAJ.
+las fuentes no disponibles y no bloquean el catálogo con las otras fuentes. Cuando
+ambos son válidos, OpenAPC tiene precedencia sobre Facts y ambos tienen
+precedencia sobre APC declarados de DOAJ.
+La tabla de tasas y cobertura de monedas se genera en
+`reports/tabla_conversion_monedas.csv`.
 
 ## Capas
 

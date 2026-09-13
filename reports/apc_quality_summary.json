@@ -1,26 +1,27 @@
 {
   "total_registros": 906,
   "registros_apc_clasificados": 906,
-  "registros_apc_imputados": 903,
+  "registros_apc_imputados": 858,
   "registros_con_faltantes_apc": 906,
-  "porcentaje_imputados_sobre_total": 99.67,
-  "porcentaje_imputados_sobre_apc_clasificados": 99.67,
+  "registros_outliers_apc_3iqr": 1,
+  "porcentaje_imputados_sobre_total": 94.7,
+  "porcentaje_imputados_sobre_apc_clasificados": 94.7,
   "campos_apc_revisados": [
     "apc_monto",
     "apc_moneda",
     "apc_monto_usd",
+    "apc_monto_ppp_usd",
     "apc_tipo",
-    "apc_metodo_imputacion"
+    "apc_imputado",
+    "apc_metodo_imputacion",
+    "apc_es_outlier"
   ],
+  "metodos_imputacion": {
+    "regresion_condicional": 858
+  },
   "variables": [
     {
       "variable": "Continued By",
-      "registros_faltantes": 906,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 100.0
-    },
-    {
-      "variable": "Continues",
       "registros_faltantes": 906,
       "registros_totales": 906,
       "porcentaje_faltantes": 100.0
@@ -32,40 +33,40 @@
       "porcentaje_faltantes": 100.0
     },
     {
-      "variable": "atributos_licencia",
+      "variable": "titulo_normalizado_openapc_dup",
+      "registros_faltantes": 906,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 100.0
+    },
+    {
+      "variable": "Continues",
       "registros_faltantes": 905,
       "registros_totales": 906,
       "porcentaje_faltantes": 99.89
     },
     {
-      "variable": "Waiver policy information URL",
-      "registros_faltantes": 903,
+      "variable": "atributos_licencia",
+      "registros_faltantes": 904,
       "registros_totales": 906,
-      "porcentaje_faltantes": 99.67
-    },
-    {
-      "variable": "apc_moneda",
-      "registros_faltantes": 903,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 99.67
-    },
-    {
-      "variable": "apc_monto",
-      "registros_faltantes": 903,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 99.67
+      "porcentaje_faltantes": 99.78
     },
     {
       "variable": "Preservation Service: national library",
-      "registros_faltantes": 902,
+      "registros_faltantes": 898,
       "registros_totales": 906,
-      "porcentaje_faltantes": 99.56
+      "porcentaje_faltantes": 99.12
     },
     {
-      "variable": "Country of other organisation",
-      "registros_faltantes": 879,
+      "variable": "Waiver policy information URL",
+      "registros_faltantes": 897,
       "registros_totales": 906,
-      "porcentaje_faltantes": 97.02
+      "porcentaje_faltantes": 99.01
+    },
+    {
+      "variable": "apc_amount_raw",
+      "registros_faltantes": 887,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 97.9
     },
     {
       "variable": "institucion_editora_2",
@@ -74,76 +75,256 @@
       "porcentaje_faltantes": 96.8
     },
     {
-      "variable": "URL for deposit policy",
-      "registros_faltantes": 873,
+      "variable": "is_hybrid",
+      "registros_faltantes": 869,
       "registros_totales": 906,
-      "porcentaje_faltantes": 96.36
+      "porcentaje_faltantes": 95.92
     },
     {
-      "variable": "titulo_alternativo",
+      "variable": "apc_moneda",
+      "registros_faltantes": 858,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 94.7
+    },
+    {
+      "variable": "apc_moneda_original",
+      "registros_faltantes": 858,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 94.7
+    },
+    {
+      "variable": "apc_monto",
+      "registros_faltantes": 858,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 94.7
+    },
+    {
+      "variable": "apc_monto_original",
+      "registros_faltantes": 858,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 94.7
+    },
+    {
+      "variable": "tasa_usd_utilizada",
+      "registros_faltantes": 858,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 94.7
+    },
+    {
+      "variable": "URL for deposit policy",
       "registros_faltantes": 849,
       "registros_totales": 906,
       "porcentaje_faltantes": 93.71
     },
     {
-      "variable": "Deposit policy directory",
-      "registros_faltantes": 844,
+      "variable": "Country of other organisation",
+      "registros_faltantes": 843,
       "registros_totales": 906,
-      "porcentaje_faltantes": 93.16
+      "porcentaje_faltantes": 93.05
     },
     {
-      "variable": "servicios_preservacion",
-      "registros_faltantes": 825,
+      "variable": "Deposit policy directory",
+      "registros_faltantes": 810,
       "registros_totales": 906,
-      "porcentaje_faltantes": 91.06
+      "porcentaje_faltantes": 89.4
+    },
+    {
+      "variable": "titulo_alternativo",
+      "registros_faltantes": 797,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 87.97
     },
     {
       "variable": "Other fees information URL",
-      "registros_faltantes": 822,
+      "registros_faltantes": 792,
       "registros_totales": 906,
-      "porcentaje_faltantes": 90.73
+      "porcentaje_faltantes": 87.42
+    },
+    {
+      "variable": "servicios_preservacion",
+      "registros_faltantes": 786,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 86.75
     },
     {
       "variable": "Preservation information URL",
-      "registros_faltantes": 808,
+      "registros_faltantes": 763,
       "registros_totales": 906,
-      "porcentaje_faltantes": 89.18
+      "porcentaje_faltantes": 84.22
     },
     {
-      "variable": "issn_electronic",
-      "registros_faltantes": 777,
+      "variable": "titulo_normalizado_scimago_dup",
+      "registros_faltantes": 758,
       "registros_totales": 906,
-      "porcentaje_faltantes": 85.76
+      "porcentaje_faltantes": 83.66
+    },
+    {
+      "variable": "areas",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "categorias",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "citas_por_doc_2y",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "cobertura",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "contraste_publindex_cuartil",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "cuartil_sjr",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "docs_citables_3y",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "h_index",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "h_index_minmax",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "h_index_zscore",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "open_access",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "overton",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "pct_female",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "rank",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "ratio_citas_docs",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "refs_por_doc",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "sjr_score",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "sjr_score_minmax",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "sjr_score_zscore",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "sourceid",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "tipo_publicacion",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "total_citas_3y",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "total_docs",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "total_docs_3y",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
+    },
+    {
+      "variable": "total_refs",
+      "registros_faltantes": 741,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 81.79
     },
     {
       "variable": "Other organisation",
-      "registros_faltantes": 760,
+      "registros_faltantes": 677,
       "registros_totales": 906,
-      "porcentaje_faltantes": 83.89
+      "porcentaje_faltantes": 74.72
     },
     {
       "variable": "cc_legible_maquina",
-      "registros_faltantes": 744,
+      "registros_faltantes": 674,
       "registros_totales": 906,
-      "porcentaje_faltantes": 82.12
+      "porcentaje_faltantes": 74.39
     },
     {
-      "variable": "identificadores_persistentes",
-      "registros_faltantes": 694,
+      "variable": "issn_electronic",
+      "registros_faltantes": 668,
       "registros_totales": 906,
-      "porcentaje_faltantes": 76.6
-    },
-    {
-      "variable": "Copyright information URL",
-      "registros_faltantes": 669,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 73.84
-    },
-    {
-      "variable": "issn_impreso",
-      "registros_faltantes": 619,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 68.32
+      "porcentaje_faltantes": 73.73
     },
     {
       "variable": "issn_linking",
@@ -152,208 +333,244 @@
       "porcentaje_faltantes": 68.21
     },
     {
-      "variable": "issn_electronico",
-      "registros_faltantes": 606,
+      "variable": "identificadores_persistentes",
+      "registros_faltantes": 597,
       "registros_totales": 906,
-      "porcentaje_faltantes": 66.89
+      "porcentaje_faltantes": 65.89
+    },
+    {
+      "variable": "titulo_normalizado_doaj_dup",
+      "registros_faltantes": 583,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 64.35
+    },
+    {
+      "variable": "Copyright information URL",
+      "registros_faltantes": 552,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 60.93
+    },
+    {
+      "variable": "issn_impreso",
+      "registros_faltantes": 529,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 58.39
     },
     {
       "variable": "fecha_ultimo_articulo",
-      "registros_faltantes": 600,
+      "registros_faltantes": 495,
       "registros_totales": 906,
-      "porcentaje_faltantes": 66.23
+      "porcentaje_faltantes": 54.64
+    },
+    {
+      "variable": "issn_electronico",
+      "registros_faltantes": 474,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 52.32
     },
     {
       "variable": "Last Full Review Date",
-      "registros_faltantes": 596,
+      "registros_faltantes": 470,
       "registros_totales": 906,
-      "porcentaje_faltantes": 65.78
+      "porcentaje_faltantes": 51.88
     },
     {
       "variable": "URL for license terms",
-      "registros_faltantes": 584,
+      "registros_faltantes": 449,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.46
+      "porcentaje_faltantes": 49.56
     },
     {
       "variable": "APC information URL",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "Mirror Journal",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "Open Journals Collective",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "Review process information URL",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "URL for journal's aims & scope",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "URL for journal's instructions for authors",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "URL for the Editorial Board page",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "When did the journal start to publish all content using an open license?",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "autor_retiene_copyright",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "codigos_lcc",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
-      "variable": "cumple_oa_doaj",
-      "registros_faltantes": 583,
+      "variable": "cumple_oa",
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
-      "variable": "editorial",
-      "registros_faltantes": 583,
+      "variable": "fecha_actualizacion",
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
-      "variable": "editorial_rapida",
-      "registros_faltantes": 583,
+      "variable": "fecha_incorporacion",
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
-    },
-    {
-      "variable": "fecha_actualizacion_doaj",
-      "registros_faltantes": 583,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
-    },
-    {
-      "variable": "fecha_incorporacion_doaj",
-      "registros_faltantes": 583,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "idiomas",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "licencia",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "materias",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "num_articulos",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "pais_editorial",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "palabras_clave",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "politica_exencion",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "politica_plagio",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
+    },
+    {
+      "variable": "semanas_pub",
+      "registros_faltantes": 448,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 49.45
+    },
+    {
+      "variable": "semanas_pub_minmax",
+      "registros_faltantes": 448,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 49.45
+    },
+    {
+      "variable": "semanas_pub_zscore",
+      "registros_faltantes": 448,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "semanas_submission_publicacion",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "subscribe_to_open",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "tiene_apc",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "tiene_otros_cobros",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "tipo_revision",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
-      "variable": "url_doaj",
-      "registros_faltantes": 583,
+      "variable": "url",
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
     },
     {
       "variable": "url_revista",
-      "registros_faltantes": 583,
+      "registros_faltantes": 448,
       "registros_totales": 906,
-      "porcentaje_faltantes": 64.35
+      "porcentaje_faltantes": 49.45
+    },
+    {
+      "variable": "editorial",
+      "registros_faltantes": 377,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 41.61
     },
     {
       "variable": "codigo_dane",
@@ -362,10 +579,10 @@
       "porcentaje_faltantes": 9.6
     },
     {
-      "variable": "pais_iso",
-      "registros_faltantes": 86,
+      "variable": "apc_metodo_imputacion",
+      "registros_faltantes": 48,
       "registros_totales": 906,
-      "porcentaje_faltantes": 9.49
+      "porcentaje_faltantes": 5.3
     },
     {
       "variable": "institucion_editora_1",
@@ -375,21 +592,15 @@
     },
     {
       "variable": "issn_print",
-      "registros_faltantes": 16,
+      "registros_faltantes": 14,
       "registros_totales": 906,
-      "porcentaje_faltantes": 1.77
+      "porcentaje_faltantes": 1.55
     },
     {
       "variable": "id_revista_publindex",
       "registros_faltantes": 13,
       "registros_totales": 906,
       "porcentaje_faltantes": 1.43
-    },
-    {
-      "variable": "apc_metodo_imputacion",
-      "registros_faltantes": 3,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 0.33
     },
     {
       "variable": "_estado_calidad",
@@ -399,12 +610,6 @@
     },
     {
       "variable": "_fecha_captura",
-      "registros_faltantes": 0,
-      "registros_totales": 906,
-      "porcentaje_faltantes": 0.0
-    },
-    {
-      "variable": "_fecha_consolidacion",
       "registros_faltantes": 0,
       "registros_totales": 906,
       "porcentaje_faltantes": 0.0
@@ -422,6 +627,12 @@
       "porcentaje_faltantes": 0.0
     },
     {
+      "variable": "_version_proceso",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
       "variable": "anio_clasificacion",
       "registros_faltantes": 0,
       "registros_totales": 906,
@@ -434,7 +645,31 @@
       "porcentaje_faltantes": 0.0
     },
     {
+      "variable": "apc_imputado",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
+      "variable": "apc_monto_ppp_usd",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
       "variable": "apc_monto_usd",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
+      "variable": "apc_monto_usd_minmax",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
+      "variable": "apc_monto_usd_zscore",
       "registros_faltantes": 0,
       "registros_totales": 906,
       "porcentaje_faltantes": 0.0
@@ -452,6 +687,12 @@
       "porcentaje_faltantes": 0.0
     },
     {
+      "variable": "brecha_publindex_sjr",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
       "variable": "categoria_publindex",
       "registros_faltantes": 0,
       "registros_totales": 906,
@@ -464,7 +705,25 @@
       "porcentaje_faltantes": 0.0
     },
     {
+      "variable": "concentracion_editorial",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
+      "variable": "cuartil_sjr_ord",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
       "variable": "departamento",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
+      "variable": "editorial_rapida",
       "registros_faltantes": 0,
       "registros_totales": 906,
       "porcentaje_faltantes": 0.0
@@ -482,7 +741,25 @@
       "porcentaje_faltantes": 0.0
     },
     {
+      "variable": "exencion_apc_lmic",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
       "variable": "gran_area",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
+      "variable": "indexada_doaj",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
+      "variable": "indice_calidad_costo",
       "registros_faltantes": 0,
       "registros_totales": 906,
       "porcentaje_faltantes": 0.0
@@ -512,7 +789,19 @@
       "porcentaje_faltantes": 0.0
     },
     {
+      "variable": "pais_iso",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
       "variable": "region",
+      "registros_faltantes": 0,
+      "registros_totales": 906,
+      "porcentaje_faltantes": 0.0
+    },
+    {
+      "variable": "revision_abierta",
       "registros_faltantes": 0,
       "registros_totales": 906,
       "porcentaje_faltantes": 0.0

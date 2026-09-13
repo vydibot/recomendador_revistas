@@ -1,0 +1,51 @@
+2026-09-13 16:51:08,330 [INFO] pipeline: ╔══════════════════════════════════════════════════════════╗
+2026-09-13 16:51:08,331 [INFO] pipeline: ║  PIPELINE ETL — Recomendador de Revistas Científicas    ║
+2026-09-13 16:51:08,331 [INFO] pipeline: ║  Versión: 1.0.0           Fecha: 2026-09-13 16:51:08       ║
+2026-09-13 16:51:08,331 [INFO] pipeline: ╚══════════════════════════════════════════════════════════╝
+2026-09-13 16:51:08,331 [INFO] pipeline: 
+============================================================
+2026-09-13 16:51:08,331 [INFO] pipeline: CAPA GOLD — Integración, Imputación y Matriz de Features
+2026-09-13 16:51:08,331 [INFO] pipeline: ============================================================
+2026-09-13 16:51:08,353 [INFO] merge_gold: ============================================================
+2026-09-13 16:51:08,353 [INFO] merge_gold: INICIO: Consolidación Gold — Catálogo Maestro de Revistas
+2026-09-13 16:51:08,353 [INFO] merge_gold: ============================================================
+2026-09-13 16:51:08,408 [INFO] merge_gold:   publindex: 906 registros cargados desde publindex_clean.parquet
+2026-09-13 16:51:08,425 [INFO] merge_gold:   scimago: 166 registros cargados desde scimago_clean.parquet
+2026-09-13 16:51:08,532 [INFO] merge_gold:   doaj: 23304 registros cargados desde doaj_clean.parquet
+2026-09-13 16:51:08,551 [INFO] merge_gold:   openapc: 12242 registros cargados desde openapc_clean.parquet
+2026-09-13 16:51:08,552 [INFO] merge_gold: Base inicial (Publindex): 906 registros
+2026-09-13 16:51:08,589 [INFO] merge_gold:   Cruce con scimago: 148 coincidencias por ISSN primario
+2026-09-13 16:51:08,857 [INFO] merge_gold:   Cruce secundario por título con scimago: 17 matches adicionales
+2026-09-13 16:51:08,920 [INFO] merge_gold:   Cruce con doaj: 323 coincidencias por ISSN primario
+2026-09-13 16:51:28,578 [INFO] merge_gold:   Cruce secundario por título con doaj: 135 matches adicionales
+2026-09-13 16:51:28,769 [INFO] merge_gold:   Cruce con openapc: 0 coincidencias por ISSN primario
+2026-09-13 16:51:41,312 [INFO] merge_gold:   Cruce secundario por título con openapc: 37 matches adicionales
+2026-09-13 16:51:41,335 [INFO] merge_gold: Resolviendo conflictos y precedencias...
+2026-09-13 16:51:41,716 [INFO] merge_gold: Generando variables derivadas, imputación y transformaciones continuas...
+2026-09-13 16:51:41,794 [INFO] merge_gold: Outliers detectados en APC (3*IQR): 1
+2026-09-13 16:51:41,802 [INFO] normalize: Iniciando imputación condicional de APC para 858 registros faltantes...
+2026-09-13 16:51:41,821 [INFO] normalize: Imputación por regresión condicional completada con éxito.
+2026-09-13 16:51:42,356 [INFO] merge_gold: Catálogo Maestro Parquet guardado: /home/vydi/recomendador_revistas/data/gold/catalogo_maestro_revistas.parquet (906 revistas)
+2026-09-13 16:51:42,357 [INFO] merge_gold: Catálogo Maestro CSV guardado: /home/vydi/recomendador_revistas/data/gold/catalogo_maestro_revistas.csv
+2026-09-13 16:51:42,357 [INFO] merge_gold: Generando matriz de características con One-Hot Encoding...
+2026-09-13 16:51:42,396 [INFO] merge_gold: Matriz de features del modelo guardada: /home/vydi/recomendador_revistas/data/gold/features_modelo.parquet (49 columnas)
+2026-09-13 16:51:42,406 [INFO] merge_gold: Log de cruces guardado en: /home/vydi/recomendador_revistas/data/silver/merge_log.csv (660 entradas)
+2026-09-13 16:51:42,406 [INFO] merge_gold: ============================================================
+2026-09-13 16:51:42,406 [INFO] merge_gold: RESUMEN CATÁLOGO MAESTRO GOLD
+2026-09-13 16:51:42,406 [INFO] merge_gold: ============================================================
+2026-09-13 16:51:42,407 [INFO] merge_gold:   Total de revistas consolidadas : 906
+2026-09-13 16:51:42,408 [INFO] merge_gold:   Revistas con APC observado     : 37
+2026-09-13 16:51:42,409 [INFO] merge_gold:   Revistas con APC declarado     : 11
+2026-09-13 16:51:42,410 [INFO] merge_gold:   Revistas con APC imputado      : 858
+2026-09-13 16:51:42,411 [INFO] merge_gold:   Revistas con Acceso Diamante   : 156
+2026-09-13 16:51:42,411 [INFO] merge_gold:   Revistas con Exención LMIC     : 906
+2026-09-13 16:51:42,411 [INFO] merge_gold:   Revistas con Revisión Abierta  : 1
+2026-09-13 16:51:42,412 [INFO] merge_gold:   Revistas indexadas en DOAJ     : 458
+2026-09-13 16:51:42,412 [INFO] merge_gold: ============================================================
+2026-09-13 16:51:42,416 [INFO] pipeline:   ✓ Gold completado con éxito: 906 revistas en Catálogo Maestro
+2026-09-13 16:51:42,418 [INFO] pipeline: 
+============================================================
+2026-09-13 16:51:42,418 [INFO] pipeline: Duración total de ejecución: 34.09 segundos
+2026-09-13 16:51:42,418 [INFO] pipeline: Log del pipeline registrado en: /home/vydi/recomendador_revistas/logs/pipeline_20260913_165108.log
+2026-09-13 16:51:42,419 [INFO] pipeline: ============================================================
+2026-09-13 16:51:42,419 [INFO] pipeline: ✓ Pipeline finalizado exitosamente.

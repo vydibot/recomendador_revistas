@@ -1,40 +1,41 @@
 """
-ETL Publindex — Revistas Indexadas, Índice Nacional Publindex.
+ETL Publindex — Revistas Indexadas, Índice Nacional Publindex (MinCiencias).
 
-Lee el CSV bronce de Publindex, normaliza campos clave (ISSN, título, país,
-año de clasificación), deduplica por ISSN canónico y escribe un parquet
-limpio en la capa silver.
+Lee el CSV bronce de Publindex (delimitador ',', codificación UTF-8),
+normaliza campos clave (ISSN impreso, electrónico y linking), calcula el ISSN canónico,
+normaliza títulos (minúsculas, sin diacríticos ni puntuación), país a código ISO,
+trata la categoría como atributo ordinal (A1=4, A2=3, B=2, C=1),
+deduplica por ISSN canónico conservando el año más reciente,
+y persiste el dataset limpio con metadatos de trazabilidad en la capa silver.
 """
 
 import logging
 import sys
+from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import (
+    CATEGORIAS_PUBLINDEX,
+    FECHA_CAPTURA,
     PUBLINDEX_FILE,
     PUBLINDEX_SILVER,
-    FECHA_CAPTURA,
-    CATEGORIAS_PUBLINDEX,
+    VERSION_PROCESO,
 )
 from normalize import (
-    limpiar_issn,
-    validar_issn_checksum,
-    obtener_issn_canonico,
-    normalizar_titulo,
-    normalizar_pais,
     hash_registro,
+    limpiar_issn,
+    normalizar_pais,
+    normalizar_titulo,
+    obtener_issn_canonico,
+    validar_issn_checksum,
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("etl_publindex")
 
-# ── Mapeo de columnas originales → nombres silver ────────────────────────────
+# Mapeo de columnas originales → nombres silver normalizados
 _RENAME_MAP = {
     "TXT_ISSN_P": "issn_print",
     "TXT_ISSN_E": "issn_electronic",
@@ -57,16 +58,11 @@ _RENAME_MAP = {
     "ID_REVISTA_P": "id_revista_publindex",
 }
 
-# Columnas que se mantienen del CSV (las que aparecen en _RENAME_MAP)
 _COLS_TO_KEEP = list(_RENAME_MAP.values())
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# Funciones auxiliares
-# ═════════════════════════════════════════════════════════════════════════════
-
 def _limpiar_anio(valor) -> object:
-    """Convierte valores como '2021.0', '2021', 2021.0, NaN → int o None."""
+    """Convierte valores como '2021.0', '2021', 2021.0, NaN -> int o None."""
     if pd.isna(valor):
         return None
     try:
@@ -75,107 +71,82 @@ def _limpiar_anio(valor) -> object:
         return None
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# Pipeline principal
-# ═════════════════════════════════════════════════════════════════════════════
-
 def procesar_publindex() -> pd.DataFrame:
     """
     Ejecuta el pipeline ETL completo para Publindex.
 
     Pasos:
-        1. Lectura del CSV bronce con codificación UTF-8.
-        2. Normalización de los 3 campos ISSN.
-        3. Cálculo del ISSN canónico (issn_normalizado).
-        4. Eliminación de registros sin ISSN válido.
-        5. Normalización del título.
-        6. Limpieza del año de clasificación.
+        1. Lectura del CSV bronce con delimitador ',' y codificación UTF-8.
+        2. Normalización y validación de los 3 campos ISSN.
+        3. Cálculo del ISSN canónico (prioridad ISSN-L > print > electronic).
+        4. Eliminación de registros sin ISSN identificable.
+        5. Normalización del título para cruce secundario.
+        6. Limpieza y tipado del año de clasificación.
         7. Normalización del país a código ISO.
-        8. Renombrado de columnas a snake_case.
-        9. Deduplicación por issn_normalizado (se conserva el año más reciente).
-       10. Adición de columnas de metadatos y hash de registro.
-       11. Escritura del parquet silver.
-
-    Returns:
-        pd.DataFrame: DataFrame limpio listo para la capa silver.
+        8. Codificación ordinal de categoría Publindex (A1=4, A2=3, B=2, C=1).
+        9. Deduplicación por ISSN canónico (conservando el año más reciente).
+       10. Adición de metadatos de trazabilidad (fuente, fecha de captura, versión de proceso, hash).
+       11. Escritura a formato Parquet en la capa Silver.
     """
-    # ── 1. Lectura ───────────────────────────────────────────────────────────
-    logger.info("Leyendo CSV bronce: %s", PUBLINDEX_FILE)
+    logger.info("Leyendo CSV bronce de Publindex: %s", PUBLINDEX_FILE)
+    if not PUBLINDEX_FILE.exists():
+        raise FileNotFoundError(f"Archivo Publindex no encontrado: {PUBLINDEX_FILE}")
+
     df = pd.read_csv(
         PUBLINDEX_FILE,
         sep=",",
         encoding="utf-8",
         dtype=str,
-        lineterminator=None,  # pandas maneja \r\n automáticamente
+        keep_default_na=True,
     )
-    # Eliminar posibles \r residuales en los valores
     df = df.apply(lambda col: col.str.strip() if col.dtype == "object" else col)
     rows_in = len(df)
     logger.info("Filas leídas: %d | Columnas: %d", rows_in, len(df.columns))
 
-    # ── 2. Normalización de ISSN ─────────────────────────────────────────────
+    # 2. Normalización de ISSN
     logger.info("Normalizando campos ISSN...")
     df["TXT_ISSN_P"] = df["TXT_ISSN_P"].apply(limpiar_issn)
     df["TXT_ISSN_E"] = df["TXT_ISSN_E"].apply(limpiar_issn)
     df["TXT_ISSN_L"] = df["TXT_ISSN_L"].apply(limpiar_issn)
 
-    # Validación de checksum (solo para logging)
-    for col in ["TXT_ISSN_P", "TXT_ISSN_E", "TXT_ISSN_L"]:
-        no_nulos = df[col].dropna()
-        invalidos = no_nulos.apply(lambda x: not validar_issn_checksum(x)).sum()
-        if invalidos > 0:
-            logger.warning(
-                "  %s: %d ISSN con checksum inválido de %d no nulos",
-                col, invalidos, len(no_nulos),
-            )
-
-    # ── 3. ISSN canónico ─────────────────────────────────────────────────────
-    logger.info("Calculando ISSN canónico (prioridad: ISSN-L > print > electronic)...")
+    # 3. ISSN canónico
     df["issn_normalizado"] = df.apply(
-        lambda r: obtener_issn_canonico(
-            r["TXT_ISSN_P"], r["TXT_ISSN_E"], r["TXT_ISSN_L"]
-        ),
+        lambda r: obtener_issn_canonico(r["TXT_ISSN_P"], r["TXT_ISSN_E"], r["TXT_ISSN_L"]),
         axis=1,
     )
 
-    # ── 4. Eliminar filas sin ISSN válido ────────────────────────────────────
+    # 4. Filtrado de registros sin ISSN válido
     sin_issn = df["issn_normalizado"].isna().sum()
-    logger.info("Filas sin ISSN válido: %d (serán eliminadas)", sin_issn)
-    df = df.dropna(subset=["issn_normalizado"]).copy()
+    if sin_issn > 0:
+        logger.warning("Descartando %d registros sin ISSN válido en Publindex", sin_issn)
+        df = df.dropna(subset=["issn_normalizado"]).copy()
 
-    # ── 5. Título normalizado ────────────────────────────────────────────────
-    logger.info("Normalizando títulos...")
+    # 5. Normalización de título
     df["titulo_normalizado"] = df["NME_REVISTA_IN"].apply(normalizar_titulo)
 
-    # ── 6. Año de clasificación ──────────────────────────────────────────────
-    logger.info("Limpiando año de clasificación (NRO_ANO)...")
+    # 6. Limpieza del año
     df["NRO_ANO"] = df["NRO_ANO"].apply(_limpiar_anio)
-    anio_nulos = df["NRO_ANO"].isna().sum()
-    if anio_nulos > 0:
-        logger.warning("  Años nulos tras limpieza: %d", anio_nulos)
 
-    # ── 7. País ISO ──────────────────────────────────────────────────────────
-    logger.info("Normalizando país a código ISO...")
-    df["pais_iso"] = df["PAIS_REV_IN"].apply(normalizar_pais)
+    # 7. País ISO
+    df["pais_iso"] = df["PAIS_REV_IN"].apply(normalizar_pais).fillna("CO")
 
-    # ── 8. Renombrar columnas ────────────────────────────────────────────────
-    logger.info("Renombrando columnas a esquema silver...")
+    # 8. Renombrado
     df = df.rename(columns=_RENAME_MAP)
 
-    # Conservar solo las columnas del esquema + las intermedias generadas
+    # Codificación ordinal de categoría Publindex
+    df["categoria_publindex_ord"] = (
+        df["categoria_publindex"].map(CATEGORIAS_PUBLINDEX).fillna(0).astype(int)
+    )
+
     cols_final = (
         _COLS_TO_KEEP
-        + ["issn_normalizado", "titulo_normalizado", "pais_iso"]
+        + ["issn_normalizado", "titulo_normalizado", "pais_iso", "categoria_publindex_ord"]
     )
-    # Filtrar columnas que realmente existen (por seguridad)
     cols_presentes = [c for c in cols_final if c in df.columns]
     df = df[cols_presentes].copy()
 
-    # ── 9. Deduplicación ─────────────────────────────────────────────────────
+    # 9. Deduplicación por ISSN normalizado
     pre_dedup = len(df)
-    logger.info("Deduplicando por issn_normalizado (conservar año más reciente)...")
-
-    # Convertir año a numérico para ordenar; NaN irá al final
     df["_anio_sort"] = pd.to_numeric(df["anio_clasificacion"], errors="coerce")
     df = (
         df.sort_values("_anio_sort", ascending=False, na_position="last")
@@ -184,70 +155,26 @@ def procesar_publindex() -> pd.DataFrame:
         .reset_index(drop=True)
     )
     duplicados_removidos = pre_dedup - len(df)
-    logger.info(
-        "  Duplicados removidos: %d | Filas tras deduplicación: %d",
-        duplicados_removidos, len(df),
-    )
+    logger.info("Duplicados removidos: %d | Filas restantes: %d", duplicados_removidos, len(df))
 
-    # ── 10. Columnas de metadatos ────────────────────────────────────────────
-    logger.info("Agregando metadatos de trazabilidad...")
+    # 10. Metadatos de trazabilidad
     df["_fuente"] = "publindex"
     df["_fecha_captura"] = FECHA_CAPTURA
+    df["_version_proceso"] = VERSION_PROCESO
     df["_estado_calidad"] = "normalizado"
-
-    # ── 11. Hash de registro ─────────────────────────────────────────────────
-    logger.info("Calculando hash de registro...")
     df["_hash_registro"] = df.apply(hash_registro, axis=1)
 
-    # ── 12. Escritura del parquet silver ──────────────────────────────────────
-    logger.info("Escribiendo parquet silver: %s", PUBLINDEX_SILVER)
+    # 11. Escritura Parquet Silver
+    PUBLINDEX_SILVER.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(PUBLINDEX_SILVER, index=False, engine="pyarrow")
+    logger.info("Parquet Silver guardado: %s (%d registros)", PUBLINDEX_SILVER, len(df))
 
-    # ── 13. Resumen de calidad ───────────────────────────────────────────────
-    rows_out = len(df)
-    logger.info("═" * 60)
-    logger.info("RESUMEN ETL PUBLINDEX")
-    logger.info("═" * 60)
-    logger.info("  Filas entrada       : %d", rows_in)
-    logger.info("  Sin ISSN (eliminadas): %d", sin_issn)
-    logger.info("  Duplicados removidos : %d", duplicados_removidos)
-    logger.info("  Filas salida         : %d", rows_out)
-
-    campos_clave = [
-        "issn_normalizado", "titulo", "titulo_normalizado",
-        "anio_clasificacion", "categoria_publindex", "pais_iso",
-    ]
-    for campo in campos_clave:
-        if campo in df.columns:
-            nulos = df[campo].isna().sum()
-            pct = 100.0 * nulos / rows_out if rows_out else 0
-            logger.info("  Nulos en %-25s: %5d (%5.1f%%)", campo, nulos, pct)
-
-    categorias = df["categoria_publindex"].value_counts(dropna=False)
-    logger.info("  Distribución de categorías:")
-    for cat, count in categorias.items():
-        logger.info("    %-5s: %d", cat if pd.notna(cat) else "NaN", count)
-
-    logger.info("═" * 60)
     return df
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# Punto de entrada
-# ═════════════════════════════════════════════════════════════════════════════
-
 def main() -> None:
-    """Punto de entrada del módulo ETL Publindex."""
-    logger.info("Iniciando ETL Publindex...")
-    try:
-        df = procesar_publindex()
-        logger.info("ETL Publindex completado exitosamente. Registros: %d", len(df))
-    except FileNotFoundError:
-        logger.error("Archivo bronce no encontrado: %s", PUBLINDEX_FILE)
-        sys.exit(1)
-    except Exception:
-        logger.exception("Error inesperado en ETL Publindex")
-        sys.exit(1)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    procesar_publindex()
 
 
 if __name__ == "__main__":

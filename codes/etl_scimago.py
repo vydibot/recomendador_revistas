@@ -1,86 +1,57 @@
 """
 ETL Scimago JR — Procesamiento de datos de Scimago Journal & Country Rank.
 
-Lee el CSV bronze de Scimago (rankings de revistas colombianas),
-normaliza campos, parsea categorías con cuartiles y genera un parquet
-limpio en la capa silver.
-
-Entrada:  data/bronze/scimagojr 2025 CO.csv   (~166 filas, 26 columnas, sep=';')
-Salida:   data/silver/scimago_clean.parquet
+Lee el CSV bronze de Scimago (delimitador ';', coma decimal para números),
+normaliza campos, parsea categorías temáticas y cuartiles ordinales (Q1=4, Q2=3, Q3=2, Q4=1),
+extrae H-index, SJR, país y editorial, deduplica por ISSN canónico
+y persiste el dataset limpio con metadatos de trazabilidad en la capa silver.
 """
 
 import logging
 import re
 import sys
+from pathlib import Path
 from typing import Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import (
+    CUARTIL_ORD,
+    FECHA_CAPTURA,
     SCIMAGO_FILE,
     SCIMAGO_SILVER,
-    FECHA_CAPTURA,
-    CUARTIL_ORD,
+    VERSION_PROCESO,
 )
 from normalize import (
-    limpiar_issn,
-    normalizar_titulo,
-    normalizar_pais,
-    parsear_decimal_coma,
     hash_registro,
+    limpiar_issn,
+    normalizar_pais,
+    normalizar_titulo,
+    parsear_numero_es_en,
 )
 
-# ── Logging ────────────────────────────────────────────────────────────────
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s │ %(name)s │ %(levelname)s │ %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
 logger = logging.getLogger("etl_scimago")
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Helpers
-# ═══════════════════════════════════════════════════════════════════════════
-
-def _parsear_issns(campo_issn: Optional[str]) -> tuple[Optional[str], Optional[str]]:
-    """
-    Divide el campo Issn de Scimago (puede contener múltiples ISSNs
-    separados por ', ') y normaliza cada uno.
-
-    Returns:
-        (issn_print, issn_electronic) — el primero y el segundo ISSN
-        normalizados.  Si solo hay uno, issn_electronic es None.
-    """
-    if pd.isna(campo_issn) or not str(campo_issn).strip():
-        return None, None
-
-    partes = [p.strip() for p in str(campo_issn).split(",")]
-    normalizados = [limpiar_issn(p) for p in partes]
-
-    issn_print = normalizados[0] if len(normalizados) >= 1 else None
-    issn_electronic = normalizados[1] if len(normalizados) >= 2 else None
-
-    return issn_print, issn_electronic
-
 
 _RE_CAT_QUARTILE = re.compile(r"(.+?)\s*\(([Qq][1-4])\)")
 
 
+def _parsear_issns(campo_issn: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    """Divide campo ISSN de Scimago (pueden venir separados por ', ') y normaliza."""
+    if pd.isna(campo_issn) or not str(campo_issn).strip():
+        return None, None
+    partes = [p.strip() for p in str(campo_issn).split(",")]
+    normalizados = [limpiar_issn(p) for p in partes if limpiar_issn(p)]
+    issn_print = normalizados[0] if len(normalizados) >= 1 else None
+    issn_electronic = normalizados[1] if len(normalizados) >= 2 else None
+    return issn_print, issn_electronic
+
+
 def _parsear_categorias(campo_cat: Optional[str]) -> list[tuple[str, str]]:
-    """
-    Parsea el campo Categories de Scimago.
-
-    Formato esperado: ``"Law (Q1); Sociology and Political Science (Q1)"``
-
-    Returns:
-        Lista de tuplas ``(categoria, cuartil)`` — e.g.
-        ``[("Law", "Q1"), ("Sociology and Political Science", "Q1")]``
-    """
+    """Parsea categorías Scimago con cuartil: 'Law (Q1); Sociology (Q2)'."""
     if pd.isna(campo_cat) or not str(campo_cat).strip():
         return []
-
     resultados = []
     for entrada in str(campo_cat).split(";"):
         entrada = entrada.strip()
@@ -90,14 +61,12 @@ def _parsear_categorias(campo_cat: Optional[str]) -> list[tuple[str, str]]:
             cuartil = match.group(2).upper()
             resultados.append((categoria, cuartil))
         elif entrada:
-            # Categoría sin cuartil explícito
             resultados.append((entrada, None))
-
     return resultados
 
 
 def _mejor_cuartil(categorias: list[tuple[str, str]]) -> Optional[str]:
-    """Determina el mejor cuartil de una lista de (categoría, cuartil)."""
+    """Determina el mejor cuartil de la lista de categorías."""
     cuartiles = [q for _, q in categorias if q in CUARTIL_ORD]
     if not cuartiles:
         return None
@@ -105,14 +74,14 @@ def _mejor_cuartil(categorias: list[tuple[str, str]]) -> Optional[str]:
 
 
 def _parsear_areas(campo_areas: Optional[str]) -> list[str]:
-    """Divide el campo Areas por '; ' y retorna lista limpia."""
+    """Divide campo Areas por ';' y retorna lista de áreas temáticas."""
     if pd.isna(campo_areas) or not str(campo_areas).strip():
         return []
     return [a.strip() for a in str(campo_areas).split(";") if a.strip()]
 
 
 def _bool_yes_no(valor: Optional[str]) -> Optional[bool]:
-    """Convierte 'Yes'/'No' a booleano."""
+    """Convierte cadenas 'Yes'/'No' a booleano."""
     if pd.isna(valor):
         return None
     v = str(valor).strip().lower()
@@ -123,85 +92,37 @@ def _bool_yes_no(valor: Optional[str]) -> Optional[bool]:
     return None
 
 
-def _safe_int(valor) -> Optional[int]:
-    """Convierte a entero de forma segura, manejando NaN y strings."""
-    if pd.isna(valor):
-        return None
-    try:
-        return int(float(str(valor).replace(",", ".")))
-    except (ValueError, TypeError):
-        return None
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Pipeline principal
-# ═══════════════════════════════════════════════════════════════════════════
-
 def procesar_scimago() -> pd.DataFrame:
     """
-    Procesa el CSV bronze de Scimago JR y retorna un DataFrame limpio.
-
-    Pasos:
-        1. Lectura del CSV con delimitador `;`
-        2. Parsing de ISSNs (print / electronic)
-        3. Normalización de título
-        4. Conversión de campos numéricos (coma decimal → float)
-        5. Conversión de campos enteros
-        6. Parsing de categorías con cuartiles
-        7. Parsing de áreas temáticas
-        8. Conversión de booleanos (Open Access)
-        9. Normalización de país a ISO
-       10. Renombramiento de columnas
-       11. Deduplicación por ISSN normalizado
-       12. Adición de metadatos de trazabilidad
-
-    Returns:
-        DataFrame listo para guardar como parquet.
+    Pipeline completo de Scimago JR bronze -> silver.
     """
-    # ── 1. Lectura ─────────────────────────────────────────────────────────
-    logger.info("Leyendo CSV bronze: %s", SCIMAGO_FILE)
+    logger.info("Leyendo CSV bronze de Scimago: %s", SCIMAGO_FILE)
+    if not SCIMAGO_FILE.exists():
+        raise FileNotFoundError(f"Archivo Scimago no encontrado: {SCIMAGO_FILE}")
 
     df = pd.read_csv(
         SCIMAGO_FILE,
         sep=";",
         encoding="utf-8",
-        dtype=str,            # leer todo como string para control total
+        dtype=str,
         keep_default_na=True,
     )
-
     filas_entrada = len(df)
     logger.info("Filas leídas: %d | Columnas: %d", filas_entrada, len(df.columns))
 
-    # Eliminar columna Publisher duplicada (Scimago repite Publisher en col 6 y 23)
-    # pandas las renombra automáticamente a 'Publisher' y 'Publisher.1'
     if "Publisher.1" in df.columns:
         df = df.drop(columns=["Publisher.1"])
-        logger.info("Columna Publisher duplicada eliminada (Publisher.1)")
 
-    # ── 2. Parsing de ISSNs ────────────────────────────────────────────────
-    logger.info("Parseando ISSNs...")
+    # Parsing de ISSNs
     issn_parsed = df["Issn"].apply(_parsear_issns)
     df["issn_print"] = issn_parsed.apply(lambda x: x[0])
     df["issn_electronic"] = issn_parsed.apply(lambda x: x[1])
     df["issn_normalizado"] = df["issn_print"].combine_first(df["issn_electronic"])
 
-    issns_nulos = df["issn_normalizado"].isna().sum()
-    logger.info(
-        "ISSNs: print=%d | electronic=%d | normalizado nulos=%d",
-        df["issn_print"].notna().sum(),
-        df["issn_electronic"].notna().sum(),
-        issns_nulos,
-    )
-
-    # ── 3. Normalización de título ─────────────────────────────────────────
-    logger.info("Normalizando títulos...")
+    # Normalización de títulos
     df["titulo_normalizado"] = df["Title"].apply(normalizar_titulo)
 
-    titulos_nulos = df["titulo_normalizado"].isna().sum()
-    logger.info("Títulos normalizados: nulos=%d", titulos_nulos)
-
-    # ── 4. Campos numéricos con coma decimal ───────────────────────────────
-    logger.info("Convirtiendo campos numéricos (coma decimal)...")
+    # Campos numéricos con posible coma decimal
     columnas_decimal = {
         "SJR": "sjr_score",
         "Citations / Doc. (2years)": "citas_por_doc_2y",
@@ -209,12 +130,10 @@ def procesar_scimago() -> pd.DataFrame:
         "%Female": "pct_female_raw",
     }
     for col_orig, col_nuevo in columnas_decimal.items():
-        df[col_nuevo] = df[col_orig].apply(parsear_decimal_coma)
-        nulos = df[col_nuevo].isna().sum()
-        logger.info("  %s → %s: nulos=%d", col_orig, col_nuevo, nulos)
+        if col_orig in df.columns:
+            df[col_nuevo] = df[col_orig].apply(parsear_numero_es_en)
 
-    # ── 5. Campos enteros ──────────────────────────────────────────────────
-    logger.info("Convirtiendo campos enteros...")
+    # Campos enteros
     columnas_enteras = {
         "Rank": "rank_scimago",
         "H index": "h_index",
@@ -226,61 +145,41 @@ def procesar_scimago() -> pd.DataFrame:
         "Overton": "overton",
     }
     for col_orig, col_nuevo in columnas_enteras.items():
-        df[col_nuevo] = df[col_orig].apply(_safe_int)
-        nulos = df[col_nuevo].isna().sum()
-        logger.info("  %s → %s: nulos=%d", col_orig, col_nuevo, nulos)
+        if col_orig in df.columns:
+            df[col_nuevo] = pd.to_numeric(df[col_orig].apply(parsear_numero_es_en), errors="coerce").astype("Int64")
 
-    # ── 6. Parsing de categorías y cuartil ─────────────────────────────────
-    logger.info("Parseando categorías Scimago...")
+    # Categorías y cuartiles
     df["categorias_parsed"] = df["Categories"].apply(_parsear_categorias)
     df["mejor_cuartil"] = df["categorias_parsed"].apply(_mejor_cuartil)
-
-    # Usar el mejor cuartil del campo parseado; fallback a SJR Best Quartile
     df["cuartil_sjr"] = df["mejor_cuartil"].combine_first(
-        df["SJR Best Quartile"].str.strip().str.upper()
+        df["SJR Best Quartile"].str.strip().str.upper() if "SJR Best Quartile" in df.columns else None
     )
-    df["cuartil_sjr_ord"] = df["cuartil_sjr"].map(CUARTIL_ORD)
+    df["cuartil_sjr_ord"] = df["cuartil_sjr"].map(CUARTIL_ORD).fillna(0).astype(int)
 
-    # Convertir lista de tuplas a formato serializable para parquet
     df["categorias_scimago"] = df["categorias_parsed"].apply(
         lambda cats: "; ".join(f"{c} ({q})" if q else c for c, q in cats) if cats else None
     )
 
-    cuartiles_nulos = df["cuartil_sjr"].isna().sum()
-    logger.info(
-        "Cuartiles: distribución=%s | nulos=%d",
-        df["cuartil_sjr"].value_counts().to_dict(),
-        cuartiles_nulos,
-    )
-
-    # ── 7. Parsing de áreas ────────────────────────────────────────────────
-    logger.info("Parseando áreas temáticas...")
+    # Áreas temáticas
     df["areas_parsed"] = df["Areas"].apply(_parsear_areas)
     df["areas_scimago"] = df["areas_parsed"].apply(
         lambda areas: "; ".join(areas) if areas else None
     )
 
-    # ── 8. Booleanos (Open Access) ─────────────────────────────────────────
-    logger.info("Convirtiendo campos booleanos...")
-    df["open_access"] = df["Open Access"].apply(_bool_yes_no)
-    df["oa_diamond"] = df["Open Access Diamond"].apply(_bool_yes_no)
+    # Booleanos
+    df["open_access"] = df["Open Access"].apply(_bool_yes_no) if "Open Access" in df.columns else None
+    df["oa_diamond"] = df["Open Access Diamond"].apply(_bool_yes_no) if "Open Access Diamond" in df.columns else None
 
-    oa_true = df["open_access"].sum()
-    diamond_true = df["oa_diamond"].sum()
-    logger.info("Open Access: yes=%d | Diamond OA: yes=%d", oa_true, diamond_true)
+    # %Female a proporción decimal
+    if "pct_female_raw" in df.columns:
+        df["pct_female"] = df["pct_female_raw"].apply(
+            lambda x: x / 100.0 if pd.notna(x) and x > 1.0 else x
+        )
 
-    # ── 9. %Female a proporción decimal ────────────────────────────────────
-    logger.info("Convirtiendo %%Female a proporción decimal...")
-    df["pct_female"] = df["pct_female_raw"].apply(
-        lambda x: x / 100.0 if pd.notna(x) and x > 1 else x
-    )
-
-    # ── 10. País ISO ───────────────────────────────────────────────────────
-    logger.info("Normalizando país...")
+    # País normalizado a código ISO
     df["pais_iso"] = df["Country"].apply(normalizar_pais)
 
-    # ── 11. Renombramiento y selección de columnas ─────────────────────────
-    logger.info("Renombrando columnas...")
+    # Selección y renombrado de columnas
     columnas_finales = {
         "rank_scimago": "rank_scimago",
         "Sourceid": "sourceid",
@@ -312,87 +211,32 @@ def procesar_scimago() -> pd.DataFrame:
         "categorias_scimago": "categorias_scimago",
         "areas_scimago": "areas_scimago",
     }
+    cols_presentes = [c for c in columnas_finales if c in df.columns]
+    df_clean = df[cols_presentes].rename(columns=columnas_finales)
 
-    # Seleccionar y renombrar
-    df_clean = df[list(columnas_finales.keys())].rename(columns=columnas_finales)
+    # Deduplicación por ISSN normalizado
+    df_clean = df_clean.dropna(subset=["issn_normalizado"]).drop_duplicates(
+        subset=["issn_normalizado"], keep="first"
+    ).reset_index(drop=True)
 
-    # ── 12. Deduplicación ──────────────────────────────────────────────────
-    antes_dedup = len(df_clean)
-    df_clean = df_clean.drop_duplicates(subset=["issn_normalizado"], keep="first")
-    # También eliminar filas sin ISSN normalizado (no son enlazables)
-    sin_issn = df_clean["issn_normalizado"].isna().sum()
-    despues_dedup = len(df_clean)
-    logger.info(
-        "Deduplicación por issn_normalizado: %d → %d filas (-%d duplicados, %d sin ISSN)",
-        antes_dedup,
-        despues_dedup,
-        antes_dedup - despues_dedup,
-        sin_issn,
-    )
-
-    # ── 13. Metadatos de trazabilidad ──────────────────────────────────────
-    logger.info("Agregando metadatos de trazabilidad...")
+    # Metadatos de trazabilidad
     df_clean["_fuente"] = "scimago"
     df_clean["_fecha_captura"] = FECHA_CAPTURA
+    df_clean["_version_proceso"] = VERSION_PROCESO
     df_clean["_estado_calidad"] = "normalizado"
     df_clean["_hash_registro"] = df_clean.apply(hash_registro, axis=1)
 
-    # ── 14. Resumen final ──────────────────────────────────────────────────
-    logger.info("═" * 60)
-    logger.info("RESUMEN ETL SCIMAGO")
-    logger.info("═" * 60)
-    logger.info("  Filas entrada (bronze) : %d", filas_entrada)
-    logger.info("  Filas salida  (silver) : %d", len(df_clean))
-    logger.info("  Columnas               : %d", len(df_clean.columns))
-    logger.info("  ISSNs nulos            : %d", df_clean["issn_normalizado"].isna().sum())
-    logger.info("  Títulos nulos          : %d", df_clean["titulo_normalizado"].isna().sum())
-    logger.info("  SJR nulos              : %d", df_clean["sjr_score"].isna().sum())
-    logger.info("  Cuartil nulos          : %d", df_clean["cuartil_sjr"].isna().sum())
-    logger.info(
-        "  Open Access            : %d / %d",
-        df_clean["open_access"].sum(),
-        len(df_clean),
-    )
-    logger.info(
-        "  Diamond OA             : %d / %d",
-        df_clean["oa_diamond"].sum(),
-        len(df_clean),
-    )
-    logger.info(
-        "  Cuartiles              : %s",
-        df_clean["cuartil_sjr"].value_counts().to_dict(),
-    )
-    logger.info(
-        "  Áreas únicas           : %d",
-        df_clean["areas_scimago"].nunique(),
-    )
-    logger.info("═" * 60)
-
-    # El orquestador importa y llama esta función directamente; guardar aquí
-    # evita que Scimago solo se escriba cuando se ejecuta este módulo como CLI.
+    # Persistencia en Silver
     SCIMAGO_SILVER.parent.mkdir(parents=True, exist_ok=True)
     df_clean.to_parquet(SCIMAGO_SILVER, index=False, engine="pyarrow")
-    logger.info("Parquet Scimago guardado: %s", SCIMAGO_SILVER)
+    logger.info("Parquet Silver guardado: %s (%d filas)", SCIMAGO_SILVER, len(df_clean))
 
     return df_clean
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Punto de entrada
-# ═══════════════════════════════════════════════════════════════════════════
-
 def main() -> None:
-    """Ejecuta el pipeline ETL de Scimago y guarda el resultado en parquet."""
-    logger.info("Iniciando ETL Scimago...")
-
-    df = procesar_scimago()
-
-    # Guardar parquet
-    SCIMAGO_SILVER.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(SCIMAGO_SILVER, index=False, engine="pyarrow")
-    logger.info("Parquet guardado: %s (%d filas)", SCIMAGO_SILVER, len(df))
-
-    logger.info("ETL Scimago completado exitosamente.")
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    procesar_scimago()
 
 
 if __name__ == "__main__":
