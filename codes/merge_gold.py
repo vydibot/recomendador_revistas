@@ -253,6 +253,40 @@ def resolver_conflictos_y_precedencias(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def exportar_apc_observado_declarado(
+    df: pd.DataFrame,
+    output_path: str | Path | None = None,
+) -> pd.DataFrame:
+    """
+    Exporta un dataset nuevo con solo APC real, es decir, observado o declarado,
+    excluyendo cualquier valor imputado.
+
+    No modifica el flujo principal del pipeline ni elimina datos antiguos:
+    únicamente genera una vista adicional de APC con filas reales.
+    """
+    df = df.copy()
+    tipo_col = "apc_tipo"
+    imputado_col = "apc_imputado"
+
+    if tipo_col not in df.columns:
+        return df.iloc[0:0].copy()
+
+    mask = df[tipo_col].fillna("").astype(str).str.lower().isin({"observado", "declarado"})
+    if imputado_col in df.columns:
+        mask = mask & ~(df[imputado_col].fillna(False).astype(bool))
+
+    filtered = df.loc[mask].copy()
+
+    if output_path is None:
+        output_path = Path(PROJECT_ROOT) / "data" / "gold" / "apc_observado_declarado.csv"
+    else:
+        output_path = Path(output_path)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    filtered.to_csv(output_path, index=False, encoding="utf-8")
+    return filtered
+
+
 def consolidar_fuentes_trazabilidad(df: pd.DataFrame) -> pd.DataFrame:
     """
     Consolida la lista de fuentes que aportaron información a cada registro y asigna trazabilidad.
@@ -429,6 +463,17 @@ def merge_gold() -> pd.DataFrame:
     catalogo.to_csv(CATALOGO_GOLD_CSV, index=False, encoding="utf-8")
     logger.info("Catálogo Maestro Parquet guardado: %s (%d revistas)", CATALOGO_GOLD, len(catalogo))
     logger.info("Catálogo Maestro CSV guardado: %s", CATALOGO_GOLD_CSV)
+
+    # 10.1. Exportación adicional de APC observado/declarado sin imputados
+    apc_real = exportar_apc_observado_declarado(
+        catalogo,
+        output_path=GOLD_DIR / "apc_observado_declarado.csv",
+    )
+    logger.info(
+        "CSV de APC real exportado: %s (%d registros no imputados)",
+        GOLD_DIR / "apc_observado_declarado.csv",
+        len(apc_real),
+    )
 
     # 11. Generación y persistencia de Matriz de Características para Modelos (features_modelo.parquet)
     # Incluye One-Hot Encoding para país, disciplina y licencia

@@ -25,7 +25,11 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from etl_openapc import _read_csv, procesar_facts, procesar_openapc
-from merge_gold import cruce_multietapa, resolver_conflictos_y_precedencias
+from merge_gold import (
+    cruce_multietapa,
+    exportar_apc_observado_declarado,
+    resolver_conflictos_y_precedencias,
+)
 from normalize import (
     calcular_variables_binarias,
     codificar_one_hot,
@@ -207,3 +211,22 @@ def test_one_hot_encoding():
     assert "pais_iso_CO" in encoded.columns
     assert "gran_area_Ingenierías" in encoded.columns
     assert "licencia_CC BY" in encoded.columns
+
+
+def test_export_apc_observado_declarado_non_imputed(tmp_path):
+    """Valida que se exporte un CSV adicional solo con APC real (no imputado)."""
+    df = pd.DataFrame({
+        "issn_normalizado": ["1111-1111", "2222-2222", "3333-3333"],
+        "titulo": ["Revista A", "Revista B", "Revista C"],
+        "apc_tipo": ["observado", "declarado", "imputado"],
+        "apc_imputado": [False, False, True],
+        "apc_monto_usd": [300.0, 400.0, 150.0],
+    })
+
+    out = exportar_apc_observado_declarado(df, output_path=tmp_path / "apc_real.csv")
+
+    assert out is not None
+    assert len(out) == 2
+    assert set(out["apc_tipo"]) == {"observado", "declarado"}
+    assert out["apc_imputado"].eq(False).all()
+    assert out["apc_monto_usd"].notna().all()
