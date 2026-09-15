@@ -28,6 +28,7 @@ from etl_openapc import _read_csv, procesar_facts, procesar_openapc
 from merge_gold import (
     construir_dataset_texto_modelos,
     cruce_multietapa,
+    enriquecer_dataset_texto,
     exportar_apc_observado_declarado,
     resolver_conflictos_y_precedencias,
 )
@@ -248,8 +249,8 @@ def test_text_model_dataset_separates_languages_and_removes_no_registra():
         "titulo_normalizado": ["salud publica", "derecho"],
         "titulo_normalizado_scimago_dup": ["public health", "law"],
         "titulo_alternativo": ["Public Health Journal", "Revista de Derecho"],
-        "palabras_clave": ["health, public health", "derecho, sociedad"],
-        "materias": ["Medicine", "Law"],
+        "palabras_clave": ["health, public health, salud", "derecho, sociedad, law"],
+        "materias": ["Medicine, salud", "Law"],
         "idiomas": ["Spanish, English", "Spanish"],
     })
 
@@ -262,6 +263,8 @@ def test_text_model_dataset_separates_languages_and_removes_no_registra():
     assert "medicine" in out.loc[0, "texto_ingles"]
     assert "health" in out.loc[0, "texto_ingles"]
     assert "health" not in out.loc[0, "texto_espanol"]
+    assert "salud" in out.loc[0, "texto_espanol"]
+    assert "salud" not in out.loc[0, "texto_ingles"]
     assert "no registra" not in out["texto_espanol"].str.cat(sep=" ")
     assert "http" not in out.loc[0, "texto_espanol"]
 
@@ -289,3 +292,33 @@ def test_text_model_dataset_contains_only_real_apc_costs():
     assert real.loc[0, "apc_tipo"] == "observado"
     assert real.loc[0, "apc_monto_usd"] == 500.0
     assert out.loc[1, "apc_monto_usd"] is pd.NA or pd.isna(out.loc[1, "apc_monto_usd"])
+
+
+def test_text_model_dataset_is_enriched_with_gold_features():
+    """Valida el cruce por ISSN de métricas, fechas y escalas Gold."""
+    texto = pd.DataFrame({
+        "issn_normalizado": ["1234-5678"],
+        "texto_espanol": ["medicina"],
+        "texto_ingles": ["medicine"],
+    })
+    catalogo = pd.DataFrame({
+        "issn_normalizado": ["1234-5678"],
+        "cuartil_sjr_ord": [4],
+        "h_index": [20],
+        "total_docs": [100],
+        "fecha_incorporacion": ["2020-01-01"],
+        "semanas_pub": [10],
+        "ratio_citas_docs": [2.5],
+        "indice_calidad_costo": [0.8],
+        "h_index_zscore": [1.2],
+        "h_index_minmax": [0.9],
+    })
+
+    enriched = enriquecer_dataset_texto(texto, catalogo)
+
+    assert len(enriched) == 1
+    assert enriched.loc[0, "cuartil_sjr_ord"] == 4
+    assert enriched.loc[0, "h_index"] == 20
+    assert enriched.loc[0, "fecha_incorporacion"] == "2020-01-01"
+    assert enriched.loc[0, "h_index_zscore"] == 1.2
+    assert enriched.loc[0, "h_index_minmax"] == 0.9

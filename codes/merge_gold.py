@@ -23,6 +23,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from lingua import Language, LanguageDetectorBuilder
 
 try:
     from rapidfuzz import fuzz as rapidfuzz_fuzz
@@ -69,6 +70,10 @@ from normalize import (
 )
 
 logger = logging.getLogger("merge_gold")
+LANGUAGE_DETECTOR = LanguageDetectorBuilder.from_languages(
+    Language.SPANISH,
+    Language.ENGLISH,
+).build()
 
 
 def cargar_silver() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -323,8 +328,6 @@ _ENGLISH_HINTS = {
     " innovation ", " technology ", " humanities ", " social ", " sciences ",
     " life ", " agronomy ", " economics ", " law ",
 }
-
-
 def _normalizar_tokens_modelo(value: object) -> list[str]:
     """Normaliza un campo textual y elimina valores administrativos o vacíos."""
     if value is None or pd.isna(value):
@@ -366,6 +369,47 @@ def _clasificar_texto_idioma(value: object, idiomas: object) -> str | None:
     return None
 
 
+def _separar_tokens_por_idioma(
+    value: object,
+    idiomas: object,
+    default_language: str | None = None,
+) -> tuple[list[str], list[str]]:
+    """Detecta cada token como español o inglés sin usar un vocabulario fijo."""
+    tokens = _normalizar_tokens_modelo(value)
+    if not tokens:
+        return [], []
+
+    texto = " ".join(tokens)
+    idioma_campo = LANGUAGE_DETECTOR.detect_language_of(texto)
+    es_declarado, en_declarado = _idiomas_declarados(idiomas)
+    espanol: list[str] = []
+    ingles: list[str] = []
+    for token in tokens:
+        confianza_es = LANGUAGE_DETECTOR.compute_language_confidence(
+            token, Language.SPANISH
+        )
+        confianza_en = LANGUAGE_DETECTOR.compute_language_confidence(
+            token, Language.ENGLISH
+        )
+        if max(confianza_es, confianza_en) < 0.75 and default_language == "es":
+            espanol.append(token)
+        elif max(confianza_es, confianza_en) < 0.75 and default_language == "en":
+            ingles.append(token)
+        elif confianza_es > confianza_en:
+            espanol.append(token)
+        elif confianza_en > confianza_es:
+            ingles.append(token)
+        elif idioma_campo == Language.SPANISH:
+            espanol.append(token)
+        elif idioma_campo == Language.ENGLISH:
+            ingles.append(token)
+        elif es_declarado and not en_declarado:
+            espanol.append(token)
+        elif en_declarado and not es_declarado:
+            ingles.append(token)
+    return espanol, ingles
+
+
 def construir_dataset_texto_modelos(df: pd.DataFrame) -> pd.DataFrame:
     """Construye el dataset textual Gold separado en español e inglés."""
     output = pd.DataFrame(index=df.index)
@@ -378,11 +422,17 @@ def construir_dataset_texto_modelos(df: pd.DataFrame) -> pd.DataFrame:
 
     def _build_text(row: pd.Series, language: str) -> str:
         tokens: list[str] = []
-        for field in _ES_TEXT_FIELDS if language == "es" else _EN_TEXT_FIELDS:
-            tokens.extend(_normalizar_tokens_modelo(row.get(field)))
-        for field in _LANGUAGE_TEXT_FIELDS:
-            if _clasificar_texto_idioma(row.get(field), row.get("idiomas")) == language:
-                tokens.extend(_normalizar_tokens_modelo(row.get(field)))
+        campos_es = set(_ES_TEXT_FIELDS)
+        campos_en = set(_EN_TEXT_FIELDS)
+        campos = _ES_TEXT_FIELDS + _EN_TEXT_FIELDS + _LANGUAGE_TEXT_FIELDS
+        for field in campos:
+            default_language = (
+                "es" if field in campos_es else "en" if field in campos_en else None
+            )
+            tokens_es, tokens_en = _separar_tokens_por_idioma(
+                row.get(field), row.get("idiomas"), default_language
+            )
+            tokens.extend(tokens_es if language == "es" else tokens_en)
         return " ".join(dict.fromkeys(tokens))
 
     output["texto_espanol"] = df.apply(lambda row: _build_text(row, "es"), axis=1)
@@ -415,15 +465,61 @@ def construir_dataset_texto_modelos(df: pd.DataFrame) -> pd.DataFrame:
 def exportar_dataset_texto_modelos(df: pd.DataFrame) -> pd.DataFrame:
     """Persiste el dataset textual sin modificar el catálogo Gold original."""
     output = construir_dataset_texto_modelos(df)
+    output = enriquecer_dataset_texto(output, df)
     output.to_parquet(TEXTO_MODELOS_GOLD, index=False, engine="pyarrow")
     output.to_csv(TEXTO_MODELOS_GOLD_CSV, index=False, encoding="utf-8")
     return output
+
+
+def enriquecer_dataset_texto(
+    texto_df: pd.DataFrame,
+    catalogo_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Anexa métricas y features Gold al dataset textual mediante ISSN."""
+    requested = [
+        "cuartil_sjr_ord",
+        "h_index",
+        "total_docs",
+        "total_docs_3y",
+        "total_refs",
+        "total_citas_3y",
+        "docs_citables_3y",
+        "citas_por_doc_2y",
+        "refs_por_doc",
+        "pct_female",
+        "fecha_incorporacion",
+        "fecha_actualizacion",
+        "Last Full Review Date",
+        "num_articulos",
+        "semanas_pub",
+        "ratio_citas_docs",
+        "indice_calidad_costo",
+    ]
+    scaled = [
+        column for column in catalogo_df.columns
+        if column.endswith("_zscore") or column.endswith("_minmax")
+    ]
+    columns = [column for column in requested + scaled if column in catalogo_df.columns]
+    if "issn_normalizado" not in texto_df.columns or "issn_normalizado" not in catalogo_df.columns:
+        return texto_df
+
+    lookup = catalogo_df[["issn_normalizado", *columns]].drop_duplicates(
+        subset=["issn_normalizado"], keep="first"
+    )
+    enriched = texto_df.drop(columns=columns, errors="ignore").merge(
+        lookup,
+        on="issn_normalizado",
+        how="left",
+        validate="many_to_one",
+    )
+    return enriched
 
 
 def exportar_dataset_texto_apc_real(df: pd.DataFrame) -> pd.DataFrame:
     """Persiste solo registros del dataset textual con APC observado o declarado."""
     output = construir_dataset_texto_modelos(df)
     output = output.loc[output["apc_real_disponible"]].reset_index(drop=True)
+    output = enriquecer_dataset_texto(output, df)
     output.to_parquet(TEXTO_APC_REAL_GOLD, index=False, engine="pyarrow")
     output.to_csv(TEXTO_APC_REAL_GOLD_CSV, index=False, encoding="utf-8")
     return output
