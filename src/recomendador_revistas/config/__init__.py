@@ -1,0 +1,1 @@
+"""Configuración de rutas, fuentes y parámetros del proyecto."""

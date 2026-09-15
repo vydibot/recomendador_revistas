@@ -1,0 +1,137 @@
+variable,registros_faltantes,registros_totales,porcentaje_faltantes
+institucion_editora_3,906,906,100.0
+titulo_normalizado_facts_dup,906,906,100.0
+titulo_normalizado_openapc_dup,906,906,100.0
+Continues,904,906,99.78
+atributos_licencia,902,906,99.56
+Continued By,901,906,99.45
+Preservation Service: national library,882,906,97.35
+institucion_editora_2,877,906,96.8
+Waiver policy information URL,869,906,95.92
+apc_amount_raw,827,906,91.28
+titulo_normalizado_scimago_dup,758,906,83.66
+URL for deposit policy,751,906,82.89
+Other fees information URL,720,906,79.47
+Country of other organisation,705,906,77.81
+Deposit policy directory,682,906,75.28
+servicios_preservacion,679,906,74.94
+Preservation information URL,636,906,70.2
+titulo_alternativo,621,906,68.54
+issn_linking,618,906,68.21
+titulo_normalizado_doaj_dup,583,906,64.35
+issn_electronic,578,906,63.8
+areas,569,906,62.8
+categorias,569,906,62.8
+citas_por_doc_2y,569,906,62.8
+cobertura,569,906,62.8
+contraste_publindex_cuartil,569,906,62.8
+cuartil_sjr,569,906,62.8
+docs_citables_3y,569,906,62.8
+h_index,569,906,62.8
+h_index_minmax,569,906,62.8
+h_index_zscore,569,906,62.8
+open_access,569,906,62.8
+overton,569,906,62.8
+pct_female,569,906,62.8
+rank,569,906,62.8
+ratio_citas_docs,569,906,62.8
+refs_por_doc,569,906,62.8
+sjr_score,569,906,62.8
+sjr_score_minmax,569,906,62.8
+sjr_score_zscore,569,906,62.8
+sourceid,569,906,62.8
+tipo_publicacion,569,906,62.8
+total_citas_3y,569,906,62.8
+total_docs,569,906,62.8
+total_docs_3y,569,906,62.8
+total_refs,569,906,62.8
+is_hybrid,525,906,57.95
+apc_moneda,501,906,55.3
+apc_moneda_original,501,906,55.3
+apc_monto,501,906,55.3
+apc_monto_original,501,906,55.3
+tasa_usd_utilizada,501,906,55.3
+cc_legible_maquina,440,906,48.57
+Other organisation,412,906,45.47
+apc_metodo_imputacion,405,906,44.7
+identificadores_persistentes,301,906,33.22
+issn_impreso,275,906,30.35
+Copyright information URL,193,906,21.3
+fecha_ultimo_articulo,182,906,20.09
+codigo_dane,87,906,9.6
+issn_electronico,77,906,8.5
+Last Full Review Date,74,906,8.17
+URL for license terms,43,906,4.75
+APC information URL,42,906,4.64
+Mirror Journal,42,906,4.64
+Open Journals Collective,42,906,4.64
+Review process information URL,42,906,4.64
+URL for journal's aims & scope,42,906,4.64
+URL for journal's instructions for authors,42,906,4.64
+URL for the Editorial Board page,42,906,4.64
+When did the journal start to publish all content using an open license?,42,906,4.64
+apc_conversion_estado,42,906,4.64
+autor_retiene_copyright,42,906,4.64
+codigos_lcc,42,906,4.64
+cumple_oa,42,906,4.64
+editorial_rapida,42,906,4.64
+fecha_actualizacion,42,906,4.64
+fecha_incorporacion,42,906,4.64
+idiomas,42,906,4.64
+licencia,42,906,4.64
+materias,42,906,4.64
+num_articulos,42,906,4.64
+pais_editorial,42,906,4.64
+palabras_clave,42,906,4.64
+politica_exencion,42,906,4.64
+politica_plagio,42,906,4.64
+semanas_pub,42,906,4.64
+semanas_pub_minmax,42,906,4.64
+semanas_pub_zscore,42,906,4.64
+semanas_submission_publicacion,42,906,4.64
+subscribe_to_open,42,906,4.64
+tiene_apc,42,906,4.64
+tiene_otros_cobros,42,906,4.64
+tipo_revision,42,906,4.64
+url,42,906,4.64
+url_revista,42,906,4.64
+editorial,38,906,4.19
+institucion_editora_1,19,906,2.1
+id_revista_publindex,13,906,1.43
+issn_print,9,906,0.99
+_estado_calidad,0,906,0.0
+_fecha_captura,0,906,0.0
+_fuentes,0,906,0.0
+_hash_registro,0,906,0.0
+_version_proceso,0,906,0.0
+anio_clasificacion,0,906,0.0
+apc_es_outlier,0,906,0.0
+apc_imputado,0,906,0.0
+apc_monto_ppp_usd,0,906,0.0
+apc_monto_usd,0,906,0.0
+apc_monto_usd_minmax,0,906,0.0
+apc_monto_usd_zscore,0,906,0.0
+apc_tipo,0,906,0.0
+area_conocimiento,0,906,0.0
+brecha_publindex_sjr,0,906,0.0
+categoria_publindex,0,906,0.0
+categoria_publindex_ord,0,906,0.0
+concentracion_editorial,0,906,0.0
+cuartil_sjr_ord,0,906,0.0
+departamento,0,906,0.0
+es_colombiana,0,906,0.0
+especialidad,0,906,0.0
+exencion_apc_lmic,0,906,0.0
+gran_area,0,906,0.0
+indexada_doaj,0,906,0.0
+indice_calidad_costo,0,906,0.0
+issn_normalizado,0,906,0.0
+municipio,0,906,0.0
+oa_diamond,0,906,0.0
+pais,0,906,0.0
+pais_iso,0,906,0.0
+region,0,906,0.0
+revision_abierta,0,906,0.0
+tipo_institucion_1,0,906,0.0
+titulo,0,906,0.0
+titulo_normalizado,0,906,0.0

@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: recomendador-revistas
+Version: 0.1.0
+Summary: Pipeline y modelos para recomendación de revistas científicas
+Requires-Python: >=3.12
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: pyarrow
+Requires-Dist: rapidfuzz
+Requires-Dist: unidecode
+Requires-Dist: lingua-language-detector
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Provides-Extra: nlp
+Requires-Dist: scikit-learn; extra == "nlp"
+Requires-Dist: transformers; extra == "nlp"
+Requires-Dist: torch; extra == "nlp"

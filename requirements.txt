@@ -1,7 +1,0 @@
-unidecode
-rapidfuzz
-lingua-language-detector
-pyarrow
-pandas
-numpy
-pytest

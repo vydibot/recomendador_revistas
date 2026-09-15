@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "recomendador-revistas"
+version = "0.1.0"
+description = "Pipeline y modelos para recomendación de revistas científicas"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas",
+    "numpy",
+    "pyarrow",
+    "rapidfuzz",
+    "unidecode",
+    "lingua-language-detector",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+nlp = ["scikit-learn", "transformers", "torch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
