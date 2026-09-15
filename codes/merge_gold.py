@@ -16,6 +16,7 @@ Consolida los datos limpios de Publindex, Scimago JR, DOAJ y OpenAPC:
 """
 
 import logging
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -46,6 +47,10 @@ from config import (
     OPENAPC_SILVER,
     PUBLINDEX_SILVER,
     SCIMAGO_SILVER,
+    TEXTO_APC_REAL_GOLD,
+    TEXTO_APC_REAL_GOLD_CSV,
+    TEXTO_MODELOS_GOLD,
+    TEXTO_MODELOS_GOLD_CSV,
     VERSION_PROCESO,
 )
 from normalize import (
@@ -278,13 +283,150 @@ def exportar_apc_observado_declarado(
     filtered = df.loc[mask].copy()
 
     if output_path is None:
-        output_path = Path(PROJECT_ROOT) / "data" / "gold" / "apc_observado_declarado.csv"
+        output_path = GOLD_DIR / "apc_observado_declarado.csv"
     else:
         output_path = Path(output_path)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     filtered.to_csv(output_path, index=False, encoding="utf-8")
     return filtered
+
+
+_ES_TEXT_FIELDS = (
+    "especialidad",
+    "area_conocimiento",
+    "gran_area",
+    "categoria_publindex",
+)
+_EN_TEXT_FIELDS = (
+    "categorias_scimago",
+    "categorias",
+    "areas_scimago",
+    "areas",
+)
+_LANGUAGE_TEXT_FIELDS = (
+    "titulo_normalizado",
+    "titulo_normalizado_scimago_dup",
+    "titulo_normalizado_doaj_dup",
+    "titulo_alternativo",
+    "palabras_clave",
+    "materias",
+)
+_SPANISH_HINTS = {
+    " el ", " la ", " los ", " las ", " de ", " del ", " y ", " para ",
+    " en ", " ciencias ", " revista ", " español ", " espanol ", " salud ",
+    " derecho ", " economía ", " economia ", " sociales ", " publica ",
+}
+_ENGLISH_HINTS = {
+    " the ", " of ", " and ", " for ", " in ", " journal ", " science ",
+    " studies ", " research ", " english ", " health ", " public ",
+    " innovation ", " technology ", " humanities ", " social ", " sciences ",
+    " life ", " agronomy ", " economics ", " law ",
+}
+
+
+def _normalizar_tokens_modelo(value: object) -> list[str]:
+    """Normaliza un campo textual y elimina valores administrativos o vacíos."""
+    if value is None or pd.isna(value):
+        return []
+    text = str(value).strip().lower()
+    if not text or text in {"na", "n/a", "nan", "none", "null", "no registra"}:
+        return []
+    text = re.sub(r"\bno\s+registra\b", " ", text)
+    text = normalizar_titulo(text)
+    return text.split() if text else []
+
+
+def _idiomas_declarados(value: object) -> tuple[bool, bool]:
+    """Identifica español e inglés sin convertirlos en una sola categoría."""
+    raw = "" if value is None or pd.isna(value) else str(value).lower()
+    return (
+        any(token in raw for token in ("spanish", "español", "espanol", "castellano")),
+        any(token in raw for token in ("english", "inglés", "ingles")),
+    )
+
+
+def _clasificar_texto_idioma(value: object, idiomas: object) -> str | None:
+    """Clasifica un valor ambiguo; devuelve None si no hay evidencia suficiente."""
+    es_declarado, en_declarado = _idiomas_declarados(idiomas)
+    tokens = _normalizar_tokens_modelo(value)
+    if not tokens:
+        return None
+    text = f" {' '.join(tokens)} "
+    es_score = sum(text.count(hint) for hint in _SPANISH_HINTS)
+    en_score = sum(text.count(hint) for hint in _ENGLISH_HINTS)
+    if es_score > en_score:
+        return "es"
+    if en_score > es_score:
+        return "en"
+    if es_declarado and not en_declarado:
+        return "es"
+    if en_declarado and not es_declarado:
+        return "en"
+    return None
+
+
+def construir_dataset_texto_modelos(df: pd.DataFrame) -> pd.DataFrame:
+    """Construye el dataset textual Gold separado en español e inglés."""
+    output = pd.DataFrame(index=df.index)
+    empty = pd.Series(index=df.index, dtype="object")
+    issn_fisico = df.get("issn_print", empty).combine_first(df.get("issn_impreso", empty))
+    issn_virtual = df.get("issn_electronic", empty).combine_first(df.get("issn_electronico", empty))
+    output["issn_fisico"] = issn_fisico
+    output["issn_virtual"] = issn_virtual
+    output["issn_normalizado"] = df.get("issn_normalizado")
+
+    def _build_text(row: pd.Series, language: str) -> str:
+        tokens: list[str] = []
+        for field in _ES_TEXT_FIELDS if language == "es" else _EN_TEXT_FIELDS:
+            tokens.extend(_normalizar_tokens_modelo(row.get(field)))
+        for field in _LANGUAGE_TEXT_FIELDS:
+            if _clasificar_texto_idioma(row.get(field), row.get("idiomas")) == language:
+                tokens.extend(_normalizar_tokens_modelo(row.get(field)))
+        return " ".join(dict.fromkeys(tokens))
+
+    output["texto_espanol"] = df.apply(lambda row: _build_text(row, "es"), axis=1)
+    output["texto_ingles"] = df.apply(lambda row: _build_text(row, "en"), axis=1)
+    output["tokens_espanol"] = output["texto_espanol"].str.split().str.len()
+    output["tokens_ingles"] = output["texto_ingles"].str.split().str.len()
+
+    apc_real_mask = (
+        df.get("apc_tipo", pd.Series(index=df.index, dtype="object"))
+        .fillna("")
+        .astype(str)
+        .str.lower()
+        .isin({"observado", "declarado"})
+    )
+    if "apc_imputado" in df.columns:
+        apc_real_mask &= ~df["apc_imputado"].fillna(False).astype(bool)
+    for column in [
+        "apc_monto_original",
+        "apc_moneda_original",
+        "apc_monto_usd",
+        "tasa_usd_utilizada",
+        "apc_monto_ppp_usd",
+        "apc_tipo",
+    ]:
+        output[column] = df[column].where(apc_real_mask) if column in df.columns else pd.NA
+    output["apc_real_disponible"] = apc_real_mask
+    return output.reset_index(drop=True)
+
+
+def exportar_dataset_texto_modelos(df: pd.DataFrame) -> pd.DataFrame:
+    """Persiste el dataset textual sin modificar el catálogo Gold original."""
+    output = construir_dataset_texto_modelos(df)
+    output.to_parquet(TEXTO_MODELOS_GOLD, index=False, engine="pyarrow")
+    output.to_csv(TEXTO_MODELOS_GOLD_CSV, index=False, encoding="utf-8")
+    return output
+
+
+def exportar_dataset_texto_apc_real(df: pd.DataFrame) -> pd.DataFrame:
+    """Persiste solo registros del dataset textual con APC observado o declarado."""
+    output = construir_dataset_texto_modelos(df)
+    output = output.loc[output["apc_real_disponible"]].reset_index(drop=True)
+    output.to_parquet(TEXTO_APC_REAL_GOLD, index=False, engine="pyarrow")
+    output.to_csv(TEXTO_APC_REAL_GOLD_CSV, index=False, encoding="utf-8")
+    return output
 
 
 def consolidar_fuentes_trazabilidad(df: pd.DataFrame) -> pd.DataFrame:
@@ -473,6 +615,22 @@ def merge_gold() -> pd.DataFrame:
         "CSV de APC real exportado: %s (%d registros no imputados)",
         GOLD_DIR / "apc_observado_declarado.csv",
         len(apc_real),
+    )
+
+    # 10.2. Dataset textual independiente para TF-IDF y SciBERT
+    texto_modelos = exportar_dataset_texto_modelos(catalogo)
+    logger.info(
+        "Dataset textual Gold exportado: %s y %s (%d registros)",
+        TEXTO_MODELOS_GOLD_CSV,
+        TEXTO_MODELOS_GOLD,
+        len(texto_modelos),
+    )
+    texto_apc_real = exportar_dataset_texto_apc_real(catalogo)
+    logger.info(
+        "Dataset textual con APC real exportado: %s y %s (%d registros)",
+        TEXTO_APC_REAL_GOLD_CSV,
+        TEXTO_APC_REAL_GOLD,
+        len(texto_apc_real),
     )
 
     # 11. Generación y persistencia de Matriz de Características para Modelos (features_modelo.parquet)

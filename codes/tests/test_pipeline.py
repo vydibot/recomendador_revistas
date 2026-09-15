@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from etl_openapc import _read_csv, procesar_facts, procesar_openapc
 from merge_gold import (
+    construir_dataset_texto_modelos,
     cruce_multietapa,
     exportar_apc_observado_declarado,
     resolver_conflictos_y_precedencias,
@@ -230,3 +231,61 @@ def test_export_apc_observado_declarado_non_imputed(tmp_path):
     assert set(out["apc_tipo"]) == {"observado", "declarado"}
     assert out["apc_imputado"].eq(False).all()
     assert out["apc_monto_usd"].notna().all()
+
+
+def test_text_model_dataset_separates_languages_and_removes_no_registra():
+    """Valida ISSN físico/virtual, textos separados y limpieza de No registra."""
+    df = pd.DataFrame({
+        "issn_print": ["1234-5678", "2345-6789"],
+        "issn_electronic": ["8765-4321", "9876-5432"],
+        "issn_normalizado": ["1234-5678", "2345-6789"],
+        "especialidad": ["Medicina", "No registra"],
+        "area_conocimiento": ["Medicina Clínica", "Economía"],
+        "gran_area": ["Ciencias Médicas", "Ciencias Sociales"],
+        "categoria_publindex": ["A1", "B"],
+        "categorias_scimago": ["Medicine (Q1)", "Law (Q2)"],
+        "areas_scimago": ["Medicine", "Social Sciences"],
+        "titulo_normalizado": ["salud publica", "derecho"],
+        "titulo_normalizado_scimago_dup": ["public health", "law"],
+        "titulo_alternativo": ["Public Health Journal", "Revista de Derecho"],
+        "palabras_clave": ["health, public health", "derecho, sociedad"],
+        "materias": ["Medicine", "Law"],
+        "idiomas": ["Spanish, English", "Spanish"],
+    })
+
+    out = construir_dataset_texto_modelos(df)
+
+    assert len(out) == 2
+    assert out.loc[0, "issn_fisico"] == "1234-5678"
+    assert out.loc[0, "issn_virtual"] == "8765-4321"
+    assert "medicina" in out.loc[0, "texto_espanol"]
+    assert "medicine" in out.loc[0, "texto_ingles"]
+    assert "health" in out.loc[0, "texto_ingles"]
+    assert "health" not in out.loc[0, "texto_espanol"]
+    assert "no registra" not in out["texto_espanol"].str.cat(sep=" ")
+    assert "http" not in out.loc[0, "texto_espanol"]
+
+
+def test_text_model_dataset_contains_only_real_apc_costs():
+    """Valida que la salida APC textual excluya costos imputados."""
+    df = pd.DataFrame({
+        "issn_print": ["1234-5678", "2345-6789"],
+        "issn_electronic": ["8765-4321", "9876-5432"],
+        "issn_normalizado": ["1234-5678", "2345-6789"],
+        "especialidad": ["Medicina", "Economía"],
+        "area_conocimiento": ["Medicina Clínica", "Economía"],
+        "gran_area": ["Ciencias Médicas", "Ciencias Sociales"],
+        "categoria_publindex": ["A1", "B"],
+        "apc_tipo": ["observado", "imputado"],
+        "apc_imputado": [False, True],
+        "apc_monto_usd": [500.0, 800.0],
+        "titulo_normalizado": ["salud publica", "economia"],
+    })
+
+    out = construir_dataset_texto_modelos(df)
+    real = out.loc[out["apc_real_disponible"]]
+
+    assert len(real) == 1
+    assert real.loc[0, "apc_tipo"] == "observado"
+    assert real.loc[0, "apc_monto_usd"] == 500.0
+    assert out.loc[1, "apc_monto_usd"] is pd.NA or pd.isna(out.loc[1, "apc_monto_usd"])

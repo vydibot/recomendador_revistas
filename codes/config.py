@@ -47,6 +47,10 @@ MERGE_LOG = SILVER_DIR / "merge_log.csv"
 CATALOGO_GOLD = GOLD_DIR / "catalogo_maestro_revistas.parquet"
 CATALOGO_GOLD_CSV = GOLD_DIR / "catalogo_maestro_revistas.csv"
 FEATURES_GOLD = GOLD_DIR / "features_modelo.parquet"
+TEXTO_MODELOS_GOLD = GOLD_DIR / "catalogo_texto_tfidf_scibert.parquet"
+TEXTO_MODELOS_GOLD_CSV = GOLD_DIR / "catalogo_texto_tfidf_scibert.csv"
+TEXTO_APC_REAL_GOLD = GOLD_DIR / "catalogo_texto_tfidf_scibert_apc_real.parquet"
+TEXTO_APC_REAL_GOLD_CSV = GOLD_DIR / "catalogo_texto_tfidf_scibert_apc_real.csv"
 MONEDAS_CONVERSION_REPORT = REPORTS_DIR / "tabla_conversion_monedas.csv"
 
 # ── Precedencia de fuentes ante conflictos ────────────────────────────────
