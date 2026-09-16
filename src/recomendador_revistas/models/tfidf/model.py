@@ -1,11 +1,5 @@
-"""Modelo TF-IDF para recuperación basada en contenido."""
+"""Compatibilidad para el modelo TF-IDF del Módulo A."""
 
+from ..thematic_profile import ThematicProfile
 
-class TfidfCosineRecommender:
-    """Contrato del recomendador TF-IDF con similitud de coseno."""
-
-    def fit(self, documents):
-        raise NotImplementedError
-
-    def recommend(self, query, top_k: int = 10):
-        raise NotImplementedError
+TfidfCosineRecommender = ThematicProfile

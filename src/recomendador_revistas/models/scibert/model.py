@@ -1,11 +1,5 @@
-"""Modelo SciBERT para representación semántica científica."""
+"""Compatibilidad para el backend SciBERT del Módulo A."""
 
+from ..thematic_profile import ThematicProfile
 
-class SciBertRecommender:
-    """Contrato del recomendador basado en embeddings SciBERT."""
-
-    def fit(self, documents):
-        raise NotImplementedError
-
-    def recommend(self, query, top_k: int = 10):
-        raise NotImplementedError
+SciBertRecommender = ThematicProfile

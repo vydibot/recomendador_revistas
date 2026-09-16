@@ -5,6 +5,7 @@ Summary: Pipeline y modelos para recomendación de revistas científicas
 Requires-Python: >=3.12
 Requires-Dist: pandas
 Requires-Dist: numpy
+Requires-Dist: scikit-learn
 Requires-Dist: pyarrow
 Requires-Dist: rapidfuzz
 Requires-Dist: unidecode

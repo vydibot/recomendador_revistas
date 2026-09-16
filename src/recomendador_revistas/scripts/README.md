@@ -8,6 +8,9 @@ Puntos de entrada disponibles:
 
 - `run_pipeline.py`: Bronze -> Silver -> Gold.
 - `report_apc.py`: reporte de calidad APC.
+- `train_thematic_profile.py`: entrenamiento TF-IDF + SciBERT del Módulo A.
+- `evaluate_journal.py`: similitud de una revista contra el resto del Gold.
+- `evaluate_manuscript.py`: compara título, resumen y palabras clave contra el Gold.
 
 Los futuros comandos de entrenamiento y evaluación se incorporarán aquí:
 

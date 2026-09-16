@@ -2,7 +2,44 @@
 
 Este módulo corresponde a la fase futura del sistema encargada del motor de recomendación híbrido de revistas científicas.
 
-## Responsabilidades Diseñadas
+## Módulo A: Perfil Temático
+
+La implementación está en `thematic_profile.py` y cubre la sección 8.2.1:
+
+- Limpieza de ecuaciones, delimitadores y comandos LaTeX.
+- Tokenización, eliminación de stopwords y lematización reproducible.
+- Vectores TF-IDF para manuscritos y textos Gold de revistas.
+- Embeddings SciBERT opcionales con pooling `mean` o `cls`.
+- Similitud coseno y fusión:
+   `score = alpha * score_tfidf + (1 - alpha) * score_scibert`.
+- Selección de `alpha` mediante `select_alpha` sobre un conjunto de validación.
+
+Ejemplo:
+
+```python
+import pandas as pd
+
+from recomendador_revistas.models.thematic_profile import (
+      ThematicProfile,
+      build_journal_corpus,
+)
+
+gold = pd.read_parquet("src/recomendador_revistas/data/gold/catalogo_texto_tfidf_scibert.parquet")
+corpus = build_journal_corpus(gold)
+profile = ThematicProfile(alpha=0.5, pooling="mean").fit(corpus)
+recommendations = profile.recommend("manuscript title, abstract and keywords", top_k=10)
+```
+
+Para activar SciBERT:
+
+```bash
+.venv/bin/python -m pip install -e ".[dev,nlp]"
+```
+
+Sin ese extra, el módulo sigue funcionando con TF-IDF y devuelve `score_scibert`
+igual a cero de forma explícita.
+
+## Responsabilidades diseñadas
 1. **Filtrado Basado en Contenido**:
    - Similitud coseno entre embeddings de manuscritos y descriptores temáticos de revistas.
 2. **Optimización Multi-Objetivo / Multi-Criterio**:
