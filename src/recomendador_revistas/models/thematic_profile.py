@@ -1,6 +1,6 @@
 """Módulo A: perfil temático de manuscritos y revistas.
 
-Implementa el flujo 8.2.1:
+Implementa el flujo:
 
 1. Limpieza de LaTeX, ecuaciones y comandos.
 2. Tokenización, stopwords y lematización ligera reproducible.

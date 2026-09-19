@@ -56,6 +56,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("pipeline")
 
+# pypdf reporta advertencias benignas de fuentes/xref malformados en PDFs
+# escaneados o de baja calidad; no son errores del pipeline y solo generan
+# ruido en el log de la capa papers.
+logging.getLogger("pypdf").setLevel(logging.ERROR)
+
 
 def calcular_hash_archivo(ruta: Path) -> str:
     """Calcula el SHA-256 de un archivo."""
@@ -274,6 +279,37 @@ def ejecutar_gold() -> bool:
         return False
 
 
+def ejecutar_papers() -> bool:
+    """Extrae artículos de los PDF en bronze/papers (Silver) y construye los
+    Gold de tokens normalizados por artículo y por revista."""
+    logger.info("\n" + "=" * 60)
+    logger.info("CAPA PAPERS — Extracción de artículos PDF y tokens normalizados")
+    logger.info("=" * 60)
+
+    try:
+        from .sources.papers import construir_gold_articulos, construir_gold_revistas, procesar_papers
+        silver = procesar_papers()
+        if silver is None or silver.empty:
+            logger.error("  ✗ Papers: no se extrajo ningún artículo")
+            return False
+
+        gold_articulos = construir_gold_articulos(silver)
+        if gold_articulos is None or gold_articulos.empty:
+            logger.error("  ✗ Papers: gold de artículos vacío")
+            return False
+
+        gold_revistas = construir_gold_revistas(gold_articulos)
+        logger.info(
+            "  ✓ Papers completado: %d artículos en %d revistas",
+            len(gold_articulos),
+            len(gold_revistas) if gold_revistas is not None else 0,
+        )
+        return True
+    except Exception as e:
+        logger.error("  ✗ Papers error: %s", e, exc_info=True)
+        return False
+
+
 def main():
     inicio = time.time()
     logger.info("╔══════════════════════════════════════════════════════════╗")
@@ -292,6 +328,9 @@ def main():
 
     if "gold" in etapas and exito:
         exito = ejecutar_gold()
+
+    if "papers" in etapas:
+        exito = ejecutar_papers() and exito
 
     duracion = time.time() - inicio
     logger.info("\n" + "=" * 60)

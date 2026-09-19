@@ -10,6 +10,7 @@ Requires-Dist: pyarrow
 Requires-Dist: rapidfuzz
 Requires-Dist: unidecode
 Requires-Dist: lingua-language-detector
+Requires-Dist: pypdf
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Provides-Extra: nlp

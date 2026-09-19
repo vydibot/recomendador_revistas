@@ -5,6 +5,7 @@ pyarrow
 rapidfuzz
 unidecode
 lingua-language-detector
+pypdf
 
 [dev]
 pytest

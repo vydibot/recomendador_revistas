@@ -53,6 +53,31 @@ La tabla de tasas y cobertura de monedas se genera en
 Las reglas y el esquema están en `docs/normalization_rules.md` y
 `docs/diccionario_datos.md`.
 
+## Artículos (bronze/papers)
+
+`src/recomendador_revistas/data/bronze/papers/<issn>/` contiene los PDF de
+cada revista (algunos son un solo artículo, otros el número completo). La
+etapa `papers` (no incluida en la ejecución por defecto por su duración)
+extrae texto y metadatos:
+
+```bash
+.venv/bin/python src/recomendador_revistas/scripts/run_pipeline.py papers
+```
+
+- Silver: `data/silver/articulos_papers.parquet` — un registro por
+  artículo/idioma (`issn_normalizado`, `titulo`, `resumen`, `palabras_clave`).
+  Los artículos bilingües generan dos registros con el mismo `issn` y
+  `articulo_id`, uno por idioma.
+- Gold: `data/gold/articulos_tokens.parquet` — un registro por artículo con
+  `tokens_normalizados` (título + resumen + palabras clave tokenizados,
+  sin stopwords, lematizados). `data/gold/revistas_tokens.parquet` — una
+  bolsa de tokens agregada por ISSN con todos sus artículos.
+
+La segmentación de artículos dentro de un PDF de número completo y la
+extracción de título son heurísticas basadas en texto plano (marcadores
+Resumen/Abstract + Palabras clave/Keywords); PDFs escaneados sin texto
+extraíble no producen artículos.
+
 El reporte APC escribe `src/recomendador_revistas/reports/apc_quality_summary.json` con los porcentajes
 de imputación, `reports/apc_missing_by_row.csv` con los faltantes de cada fila y
 `reports/missing_by_variable.csv` con el porcentaje de faltantes de cada

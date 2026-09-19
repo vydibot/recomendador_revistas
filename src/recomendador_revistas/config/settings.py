@@ -36,6 +36,7 @@ DOAJ_FILE = BRONZE_DIR / "doaj_journalcsv_20260812_2320_utf8.csv"
 SCIMAGO_FILE = BRONZE_DIR / "scimagojr 2025 CO.csv"
 OPENAPC_FILE = BRONZE_DIR / "open_apc.csv"
 FACTS_FILE = BRONZE_DIR / "facts.csv"
+PAPERS_DIR = BRONZE_DIR / "papers"
 
 # ── Archivos silver ────────────────────────────────────────────────────────
 PUBLINDEX_SILVER = SILVER_DIR / "publindex_clean.parquet"
@@ -44,6 +45,8 @@ SCIMAGO_SILVER = SILVER_DIR / "scimago_clean.parquet"
 OPENAPC_SILVER = SILVER_DIR / "openapc_clean.parquet"
 FACTS_SILVER = SILVER_DIR / "facts_clean.parquet"
 MERGE_LOG = SILVER_DIR / "merge_log.csv"
+PAPERS_SILVER = SILVER_DIR / "articulos_papers.parquet"
+PAPERS_SILVER_CSV = SILVER_DIR / "articulos_papers.csv"
 
 # ── Archivos gold ──────────────────────────────────────────────────────────
 CATALOGO_GOLD = GOLD_DIR / "catalogo_maestro_revistas.parquet"
@@ -54,6 +57,17 @@ TEXTO_MODELOS_GOLD_CSV = GOLD_DIR / "catalogo_texto_tfidf_scibert.csv"
 TEXTO_APC_REAL_GOLD = GOLD_DIR / "catalogo_texto_tfidf_scibert_apc_real.parquet"
 TEXTO_APC_REAL_GOLD_CSV = GOLD_DIR / "catalogo_texto_tfidf_scibert_apc_real.csv"
 MONEDAS_CONVERSION_REPORT = REPORTS_DIR / "tabla_conversion_monedas.csv"
+# Gold de artículos: un registro por artículo/idioma con tokens normalizados.
+ARTICULOS_GOLD = GOLD_DIR / "articulos_tokens.parquet"
+ARTICULOS_GOLD_CSV = GOLD_DIR / "articulos_tokens.csv"
+# Gold por revista: bolsa de tokens normalizados agregada por ISSN.
+REVISTA_TOKENS_GOLD = GOLD_DIR / "revistas_tokens.parquet"
+REVISTA_TOKENS_GOLD_CSV = GOLD_DIR / "revistas_tokens.csv"
+
+# ── Parámetros de extracción de artículos PDF (bronze/papers) ────────────
+# Límite de páginas leídas por PDF (acota el tiempo de proceso en números
+# completos de revista muy extensos o con muchas páginas escaneadas).
+PAPERS_MAX_PAGINAS = 400
 
 # ── Precedencia de fuentes ante conflictos ────────────────────────────────
 # (Mayor valor = mayor prioridad)

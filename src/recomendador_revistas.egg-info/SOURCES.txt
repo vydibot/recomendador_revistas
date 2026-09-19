@@ -34,7 +34,10 @@ src/recomendador_revistas/models/scibert/siamese.py
 src/recomendador_revistas/models/tfidf/__init__.py
 src/recomendador_revistas/models/tfidf/model.py
 src/recomendador_revistas/scripts/__init__.py
+src/recomendador_revistas/scripts/evaluate_journal.py
+src/recomendador_revistas/scripts/evaluate_manuscript.py
 src/recomendador_revistas/scripts/report_apc.py
 src/recomendador_revistas/scripts/run_pipeline.py
+src/recomendador_revistas/scripts/train_thematic_profile.py
 tests/test_pipeline.py
 tests/test_thematic_profile.py
