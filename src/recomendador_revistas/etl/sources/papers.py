@@ -39,6 +39,14 @@ try:
 except ImportError:  # pragma: no cover
     PdfReader = None
 
+try:
+    import pymupdf as fitz
+except ImportError:  # pragma: no cover
+    try:
+        import fitz
+    except ImportError:  # pragma: no cover
+        fitz = None
+
 from ...config.settings import (
     ARTICULOS_GOLD,
     ARTICULOS_GOLD_CSV,
@@ -71,33 +79,98 @@ VENTANA_PALABRAS_CLAVE_MAX = 400  # longitud máxima capturada para palabras cla
 GAP_NUEVO_ARTICULO = 6000         # distancia mínima entre marcadores para tratarlos como artículos distintos
 
 
-def _extraer_texto_pdf(ruta: Path, max_paginas: int = PAPERS_MAX_PAGINAS) -> str:
-    """Extrae el texto de un PDF, acotando páginas para limitar el tiempo de proceso."""
+def _normalizar_texto_extraido(texto: str) -> str:
+    """Corrige artefactos frecuentes sin destruir saltos de línea útiles."""
+    texto = texto.replace("\u00ad", "")
+    texto = texto.translate(str.maketrans({
+        "ﬁ": "fi", "ﬂ": "fl", "ﬀ": "ff", "ﬃ": "ffi", "ﬄ": "ffl",
+    }))
+    texto = re.sub(r"(?<=\w)-\s*\n\s*(?=\w)", "", texto)
+    texto = re.sub(r"[ \t]+", " ", texto)
+    texto = re.sub(r"\n{3,}", "\n\n", texto)
+    return texto.strip()
+
+
+def _extraer_con_pypdf(ruta: Path, max_paginas: int) -> str:
+    """Extrae primero preservando layout y usa modo plano como fallback."""
     if PdfReader is None:
-        raise ImportError("pypdf no está instalado; agréguelo a las dependencias del proyecto")
-    try:
-        reader = PdfReader(str(ruta), strict=False)
-    except Exception as e:
-        logger.warning("  ✗ No se pudo abrir %s: %s", ruta.name, e)
         return ""
-
-    try:
-        num_paginas = len(reader.pages)
-    except Exception as e:
-        logger.warning("  ✗ No se pudo leer la cantidad de páginas de %s: %s", ruta.name, e)
-        return ""
-
-    limite = min(num_paginas, max_paginas)
+    reader = PdfReader(str(ruta), strict=False)
+    limite = min(len(reader.pages), max_paginas)
     textos = []
     for i in range(limite):
         try:
-            textos.append(reader.pages[i].extract_text() or "")
-        except Exception as e:
-            logger.debug("  Página %d de %s no pudo extraerse: %s", i, ruta.name, e)
-            textos.append("")
-    if num_paginas > max_paginas:
-        logger.info("  %s: %d páginas, truncado a %d para extracción", ruta.name, num_paginas, max_paginas)
+            try:
+                pagina = reader.pages[i].extract_text(extraction_mode="layout") or ""
+            except (TypeError, ValueError):
+                pagina = reader.pages[i].extract_text() or ""
+            textos.append(_normalizar_texto_extraido(pagina))
+        except Exception as error:
+            logger.debug("Página %d de %s no pudo extraerse: %s", i, ruta.name, error)
     return "\f".join(textos)
+
+
+def _extraer_con_ocr(ruta: Path, max_paginas: int) -> str:
+    """Aplica OCR opcional a PDFs escaneados cuando el entorno lo permite."""
+    if fitz is None:
+        return ""
+    try:
+        import pytesseract
+        from PIL import Image
+    except ImportError:
+        return ""
+    try:
+        documento = fitz.open(str(ruta))
+        textos = []
+        for pagina in documento[:max_paginas]:
+            pixmap = pagina.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+            imagen = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+            textos.append(_normalizar_texto_extraido(
+                pytesseract.image_to_string(imagen, lang="spa+eng")
+            ))
+        return "\f".join(textos)
+    except Exception as error:
+        logger.warning("  OCR no disponible para %s: %s", ruta.name, error)
+        return ""
+
+
+def _extraer_con_pymupdf(ruta: Path, max_paginas: int) -> str:
+    """Extrae la capa textual nativa como segundo fallback de bajo costo."""
+    if fitz is None:
+        return ""
+    try:
+        documento = fitz.open(str(ruta))
+        textos = [
+            _normalizar_texto_extraido(pagina.get_text("text") or "")
+            for pagina in documento[:max_paginas]
+        ]
+        return "\f".join(textos)
+    except Exception as error:
+        logger.debug("PyMuPDF no pudo extraer %s: %s", ruta.name, error)
+        return ""
+
+
+def _extraer_texto_pdf(ruta: Path, max_paginas: int = PAPERS_MAX_PAGINAS) -> str:
+    """Extrae texto nativo y activa OCR solo para PDFs sin capa textual."""
+    if PdfReader is None:
+        raise ImportError("pypdf no está instalado; agréguelo a las dependencias del proyecto")
+    pymupdf_text = _extraer_con_pymupdf(ruta, max_paginas)
+    if len(re.sub(r"\s+", "", pymupdf_text)) >= 200:
+        return pymupdf_text
+
+    try:
+        texto = _extraer_con_pypdf(ruta, max_paginas)
+    except Exception as error:
+        logger.warning("  ✗ No se pudo extraer texto nativo de %s: %s", ruta.name, error)
+        texto = ""
+    if len(re.sub(r"\s+", "", texto)) >= 200:
+        return texto
+
+    ocr = _extraer_con_ocr(ruta, max_paginas)
+    if len(re.sub(r"\s+", "", ocr)) > len(re.sub(r"\s+", "", pymupdf_text)):
+        logger.info("  %s: extracción OCR activada", ruta.name)
+        return ocr
+    return pymupdf_text or texto
 
 
 def _buscar_anclas(texto: str) -> list[dict]:
@@ -236,6 +309,28 @@ def extraer_articulos_pdf(ruta: Path, issn: str) -> list[dict]:
     return registros
 
 
+def normalizar_papers(df: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza título, resumen y keywords una sola vez para la capa Silver."""
+    df = df.copy()
+    columnas_normalizadas = {
+        "titulo": "titulo_normalizado",
+        "resumen": "resumen_normalizado",
+        "palabras_clave": "palabras_clave_normalizadas",
+    }
+    for campo, columna in columnas_normalizadas.items():
+        df[columna] = df.apply(
+            lambda fila: preprocess_text(
+                fila.get(campo),
+                language=fila.get("idioma") if fila.get("idioma") in ("es", "en") else "auto",
+            ),
+            axis=1,
+        )
+    df["texto_modelo"] = df[
+        ["titulo_normalizado", "resumen_normalizado", "palabras_clave_normalizadas"]
+    ].agg(" ".join, axis=1).str.replace(r"\s+", " ", regex=True).str.strip()
+    return df
+
+
 def procesar_papers(carpetas: Optional[list[str]] = None) -> pd.DataFrame:
     """Recorre ``PAPERS_DIR/<issn>/*.pdf`` y construye la capa Silver de artículos."""
     if not PAPERS_DIR.exists():
@@ -264,7 +359,7 @@ def procesar_papers(carpetas: Optional[list[str]] = None) -> pd.DataFrame:
         logger.warning("No se extrajo ningún artículo de %d PDFs revisados", total_pdfs)
         return pd.DataFrame()
 
-    df = pd.DataFrame(registros)
+    df = normalizar_papers(pd.DataFrame(registros))
     df["version_proceso"] = VERSION_PROCESO
     df["hash_articulo"] = df.apply(
         lambda r: hashlib.sha256(
@@ -292,18 +387,26 @@ def construir_gold_articulos(silver: Optional[pd.DataFrame] = None) -> pd.DataFr
     filas = []
     for _, fila in silver.iterrows():
         idioma = fila.get("idioma")
-        lang_token = idioma if idioma in ("es", "en") else "auto"
-        texto_completo = " ".join(
-            str(v) for v in [fila.get("titulo"), fila.get("resumen"), fila.get("palabras_clave")]
-            if v and not pd.isna(v)
-        )
-        tokens = preprocess_text(texto_completo, language=lang_token)
+        normalizados = {
+            campo: fila.get(f"{campo}_normalizado")
+            for campo in ("titulo", "resumen", "palabras_clave")
+        }
+        if not any(normalizados.values()):
+            lang_token = idioma if idioma in ("es", "en") else "auto"
+            for campo in normalizados:
+                normalizados[campo] = preprocess_text(fila.get(campo), language=lang_token)
+        tokens = " ".join(str(valor) for valor in normalizados.values() if valor and not pd.isna(valor))
         filas.append({
             "issn_normalizado": fila["issn_normalizado"],
             "articulo_id": fila["articulo_id"],
             "archivo": fila["archivo"],
             "idioma": idioma,
             "titulo": fila.get("titulo"),
+            "resumen": fila.get("resumen"),
+            "palabras_clave": fila.get("palabras_clave"),
+            "titulo_normalizado": normalizados["titulo"] or "",
+            "resumen_normalizado": normalizados["resumen"] or "",
+            "palabras_clave_normalizadas": normalizados["palabras_clave"] or "",
             "tokens_normalizados": tokens,
             "num_tokens": len(tokens.split()) if tokens else 0,
         })

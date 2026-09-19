@@ -52,6 +52,7 @@ from ..config.settings import (
     TEXTO_MODELOS_GOLD_CSV,
     VERSION_PROCESO,
 )
+from ..analysis.indices import build_indices
 from ..data.normalization import (
     calcular_concentracion_mercado,
     calcular_variables_binarias,
@@ -636,6 +637,9 @@ def calcular_features_avanzadas(df: pd.DataFrame) -> pd.DataFrame:
 
     # 11. Escalamiento continuo Min-Max [0, 1] (para visualización y scoring)
     df = escalar_minmax(df, cols_continuas, sufijo="_minmax")
+
+    # 12. Índice TOPSIS de calidad-costo-eficiencia con pesos configurables
+    df = build_indices(df)
 
     return df
 

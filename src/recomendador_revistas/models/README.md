@@ -39,6 +39,18 @@ Para activar SciBERT:
 Sin ese extra, el módulo sigue funcionando con TF-IDF y devuelve `score_scibert`
 igual a cero de forma explícita.
 
+Evaluación Top-N:
+
+```bash
+.venv/bin/python src/recomendador_revistas/scripts/evaluate_models.py \
+  --evaluation-csv src/recomendador_revistas/data/evaluation/manuscripts_relevance_template.csv \
+  --test-size 0.2 \
+  --ks 5,10,20
+```
+
+El script calcula Precision@K, Recall@K, F1@K, Accuracy@K, NDCG@K, MAP y MRR,
+y ajusta `alpha` por validación en entrenamiento.
+
 ## Responsabilidades diseñadas
 1. **Filtrado Basado en Contenido**:
    - Similitud coseno entre embeddings de manuscritos y descriptores temáticos de revistas.

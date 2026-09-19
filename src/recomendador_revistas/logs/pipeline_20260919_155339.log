@@ -1,0 +1,137 @@
+2026-09-19 15:53:39,069 [INFO] pipeline: ╔══════════════════════════════════════════════════════════╗
+2026-09-19 15:53:39,069 [INFO] pipeline: ║  PIPELINE ETL — Recomendador de Revistas Científicas    ║
+2026-09-19 15:53:39,069 [INFO] pipeline: ║  Versión: 1.0.0           Fecha: 2026-09-19 15:53:39       ║
+2026-09-19 15:53:39,069 [INFO] pipeline: ╚══════════════════════════════════════════════════════════╝
+2026-09-19 15:53:39,069 [INFO] pipeline: ============================================================
+2026-09-19 15:53:39,069 [INFO] pipeline: VALIDACIÓN BRONZE
+2026-09-19 15:53:39,069 [INFO] pipeline: ============================================================
+2026-09-19 15:53:39,085 [INFO] pipeline:   ✓ publindex: ~6276 filas, 34 columnas, sep=',', 2,708,275 bytes
+2026-09-19 15:53:39,088 [INFO] pipeline:   ✓ scimago: ~166 filas, 26 columnas, sep=';', 57,736 bytes
+2026-09-19 15:53:39,319 [INFO] pipeline:   ✓ doaj: ~23305 filas, 52 columnas, sep=',', 25,554,714 bytes
+2026-09-19 15:53:39,482 [INFO] pipeline:   ✓ openapc: ~268157 filas, 18 columnas, sep=',', 66,143,808 bytes
+2026-09-19 15:53:39,612 [INFO] pipeline:   ✓ facts: ~294449 filas, 14 columnas, sep=',', 49,082,441 bytes
+2026-09-19 15:53:39,613 [INFO] pipeline:   Registro de validación guardado en: /home/vydi/recomendador_revistas/src/recomendador_revistas/logs/bronze_validation.json
+2026-09-19 15:53:39,616 [INFO] pipeline: 
+============================================================
+2026-09-19 15:53:39,616 [INFO] pipeline: CAPA SILVER — Limpieza y Normalización (Sección 8.1.1 & 8.1.2)
+2026-09-19 15:53:39,616 [INFO] pipeline: ============================================================
+2026-09-19 15:53:39,616 [INFO] pipeline: 
+── Procesando Publindex (MinCiencias) ──
+2026-09-19 15:53:39,643 [INFO] etl_publindex: Leyendo CSV bronce de Publindex: /home/vydi/recomendador_revistas/src/recomendador_revistas/data/bronze/Revistas_Indexadas,_Índice_Nacional_Publindex_20260910.csv
+2026-09-19 15:53:39,697 [INFO] etl_publindex: Filas leídas: 6276 | Columnas: 34
+2026-09-19 15:53:39,697 [INFO] etl_publindex: Normalizando campos ISSN...
+2026-09-19 15:53:40,718 [INFO] etl_publindex: Duplicados removidos: 5370 | Filas restantes: 906
+2026-09-19 15:53:40,773 [INFO] etl_publindex: Parquet Silver guardado: /home/vydi/recomendador_revistas/src/recomendador_revistas/data/silver/publindex_clean.parquet (906 registros)
+2026-09-19 15:53:40,774 [INFO] pipeline:   ✓ Publindex: 906 registros normalizados en Silver
+2026-09-19 15:53:40,774 [INFO] pipeline: 
+── Procesando Scimago Journal & Country Rank ──
+2026-09-19 15:53:40,775 [INFO] etl_scimago: Leyendo CSV bronze de Scimago: /home/vydi/recomendador_revistas/src/recomendador_revistas/data/bronze/scimagojr 2025 CO.csv
+2026-09-19 15:53:40,779 [INFO] etl_scimago: Filas leídas: 166 | Columnas: 26
+2026-09-19 15:53:40,834 [INFO] etl_scimago: Parquet Silver guardado: /home/vydi/recomendador_revistas/src/recomendador_revistas/data/silver/scimago_clean.parquet (166 filas)
+2026-09-19 15:53:40,834 [INFO] pipeline:   ✓ Scimago: 166 registros normalizados en Silver
+2026-09-19 15:53:40,834 [INFO] pipeline: 
+── Procesando DOAJ (Directory of Open Access Journals) ──
+2026-09-19 15:53:40,835 [INFO] etl_doaj: Leyendo archivo DOAJ: /home/vydi/recomendador_revistas/src/recomendador_revistas/data/bronze/doaj_journalcsv_20260812_2320_utf8.csv
+2026-09-19 15:53:41,632 [INFO] etl_doaj: DOAJ leído: 23305 filas x 52 columnas
+2026-09-19 15:53:48,266 [INFO] etl_doaj: Tabla de conversión guardada: /home/vydi/recomendador_revistas/src/recomendador_revistas/reports/tabla_conversion_monedas.csv (49 monedas)
+2026-09-19 15:53:48,416 [INFO] etl_doaj: DOAJ Parquet Silver guardado: /home/vydi/recomendador_revistas/src/recomendador_revistas/data/silver/doaj_clean.parquet (23304 registros)
+2026-09-19 15:53:48,417 [INFO] pipeline:   ✓ DOAJ: 23304 registros normalizados en Silver
+2026-09-19 15:53:48,417 [INFO] pipeline: 
+── Procesando OpenAPC (Pagos observados) ──
+2026-09-19 15:53:54,734 [INFO] etl_openapc: openapc Silver guardado: /home/vydi/recomendador_revistas/src/recomendador_revistas/data/silver/openapc_clean.parquet (12242 registros)
+2026-09-19 15:53:54,746 [INFO] pipeline:   ✓ OpenAPC: 12242 registros normalizados en Silver
+2026-09-19 15:53:54,747 [INFO] pipeline: 
+── Procesando Facts (Registro adicional de APC) ──
+2026-09-19 15:54:00,387 [INFO] etl_openapc: facts Silver guardado: /home/vydi/recomendador_revistas/src/recomendador_revistas/data/silver/facts_clean.parquet (12583 registros)
+2026-09-19 15:54:00,400 [INFO] pipeline:   ✓ Facts: 12583 registros normalizados en Silver
+2026-09-19 15:54:00,401 [INFO] pipeline: 
+  Silver completado: 3 fuentes exitosas, 0 errores
+2026-09-19 15:54:00,401 [INFO] pipeline: 
+============================================================
+2026-09-19 15:54:00,401 [INFO] pipeline: CAPA GOLD — Integración, Imputación y Matriz de Features
+2026-09-19 15:54:00,401 [INFO] pipeline: ============================================================
+2026-09-19 15:54:00,413 [INFO] merge_gold: ============================================================
+2026-09-19 15:54:00,413 [INFO] merge_gold: INICIO: Consolidación Gold — Catálogo Maestro de Revistas
+2026-09-19 15:54:00,413 [INFO] merge_gold: ============================================================
+2026-09-19 15:54:00,446 [INFO] merge_gold:   publindex: 906 registros cargados desde publindex_clean.parquet
+2026-09-19 15:54:00,452 [INFO] merge_gold:   scimago: 166 registros cargados desde scimago_clean.parquet
+2026-09-19 15:54:00,550 [INFO] merge_gold:   doaj: 23304 registros cargados desde doaj_clean.parquet
+2026-09-19 15:54:00,651 [INFO] merge_gold:   facts: 12583 registros cargados desde facts_clean.parquet
+2026-09-19 15:54:00,661 [INFO] merge_gold:   openapc: 12242 registros cargados desde openapc_clean.parquet
+2026-09-19 15:54:00,662 [INFO] merge_gold: Base inicial (Publindex): 906 registros
+2026-09-19 15:54:00,672 [INFO] merge_gold:   Cruce con scimago: 148 coincidencias por ISSN primario
+2026-09-19 15:54:01,585 [INFO] merge_gold:   Cruce secundario por título con scimago: 189 matches adicionales
+2026-09-19 15:54:01,620 [INFO] merge_gold:   Cruce con doaj: 323 coincidencias por ISSN primario
+2026-09-19 15:54:18,844 [INFO] merge_gold:   Cruce secundario por título con doaj: 541 matches adicionales
+2026-09-19 15:54:18,864 [INFO] merge_gold:   Cruce con facts: 0 coincidencias por ISSN primario
+2026-09-19 15:54:32,755 [INFO] merge_gold:   Cruce secundario por título con facts: 381 matches adicionales
+2026-09-19 15:54:32,773 [INFO] merge_gold:   Cruce con openapc: 0 coincidencias por ISSN primario
+2026-09-19 15:54:46,890 [INFO] merge_gold:   Cruce secundario por título con openapc: 370 matches adicionales
+2026-09-19 15:54:46,892 [INFO] merge_gold: Resolviendo conflictos y precedencias...
+2026-09-19 15:54:47,048 [INFO] merge_gold: Generando variables derivadas, imputación y transformaciones continuas...
+2026-09-19 15:54:47,089 [INFO] merge_gold: Outliers detectados en APC (3*IQR): 1
+2026-09-19 15:54:47,092 [INFO] recomendador_revistas.data.normalization: Iniciando imputación condicional de APC para 501 registros faltantes...
+2026-09-19 15:54:47,102 [INFO] recomendador_revistas.data.normalization: Imputación por regresión condicional completada con éxito.
+2026-09-19 15:54:47,166 [ERROR] pipeline:   ✗ Gold error: Invalid value '0.0' for dtype 'boolean'
+Traceback (most recent call last):
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/internals/blocks.py", line 1907, in fillna
+    new_values = self.values.fillna(value=value, limit=limit, copy=copy)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/arrays/masked.py", line 326, in fillna
+    new_values[mask] = value
+    ~~~~~~~~~~^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/arrays/masked.py", line 377, in __setitem__
+    value = self._validate_setitem_value(value)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/arrays/masked.py", line 363, in _validate_setitem_value
+    raise TypeError(f"Invalid value '{value!s}' for dtype '{self.dtype}'")
+TypeError: Invalid value '0.0' for dtype 'boolean'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/vydi/recomendador_revistas/src/recomendador_revistas/etl/runner.py", line 270, in ejecutar_gold
+    catalogo = merge_gold()
+               ^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/src/recomendador_revistas/etl/gold.py", line 695, in merge_gold
+    catalogo = calcular_features_avanzadas(catalogo)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/src/recomendador_revistas/etl/gold.py", line 642, in calcular_features_avanzadas
+    df = build_indices(df)
+         ^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/src/recomendador_revistas/analysis/indices.py", line 111, in build_indices
+    return topsis_quality_cost_index(dataset, order=order)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/src/recomendador_revistas/analysis/indices.py", line 86, in topsis_quality_cost_index
+    normalized = _minmax(result[column])
+                 ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/src/recomendador_revistas/analysis/indices.py", line 56, in _minmax
+    filled = numeric.fillna(numeric.median())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/generic.py", line 7074, in fillna
+    new_data = self._mgr.fillna(value=value, limit=limit, inplace=inplace)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/internals/managers.py", line 461, in fillna
+    return self.apply(
+           ^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/internals/managers.py", line 445, in apply
+    applied = getattr(b, f)(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/internals/blocks.py", line 1911, in fillna
+    new_values = self.values.fillna(value=value, limit=limit)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/arrays/masked.py", line 326, in fillna
+    new_values[mask] = value
+    ~~~~~~~~~~^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/arrays/masked.py", line 377, in __setitem__
+    value = self._validate_setitem_value(value)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vydi/recomendador_revistas/.venv/lib/python3.12/site-packages/pandas/core/arrays/masked.py", line 363, in _validate_setitem_value
+    raise TypeError(f"Invalid value '{value!s}' for dtype '{self.dtype}'")
+TypeError: Invalid value '0.0' for dtype 'boolean'
+2026-09-19 15:54:47,176 [INFO] pipeline: 
+============================================================
+2026-09-19 15:54:47,177 [INFO] pipeline: Duración total de ejecución: 68.11 segundos
+2026-09-19 15:54:47,177 [INFO] pipeline: Log del pipeline registrado en: /home/vydi/recomendador_revistas/src/recomendador_revistas/logs/pipeline_20260919_155339.log
+2026-09-19 15:54:47,177 [INFO] pipeline: ============================================================
+2026-09-19 15:54:47,177 [ERROR] pipeline: ✗ Pipeline finalizado con errores.

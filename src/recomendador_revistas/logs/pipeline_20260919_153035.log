@@ -1,0 +1,12 @@
+2026-09-19 15:30:35,113 [INFO] pipeline: ╔══════════════════════════════════════════════════════════╗
+2026-09-19 15:30:35,113 [INFO] pipeline: ║  PIPELINE ETL — Recomendador de Revistas Científicas    ║
+2026-09-19 15:30:35,113 [INFO] pipeline: ║  Versión: 1.0.0           Fecha: 2026-09-19 15:30:35       ║
+2026-09-19 15:30:35,113 [INFO] pipeline: ╚══════════════════════════════════════════════════════════╝
+2026-09-19 15:30:35,114 [INFO] pipeline: 
+============================================================
+2026-09-19 15:30:35,114 [INFO] pipeline: CAPA PAPERS — Extracción de artículos PDF y tokens normalizados
+2026-09-19 15:30:35,114 [INFO] pipeline: ============================================================
+2026-09-19 15:32:53,715 [INFO] etl_papers:   0034-7418/RCCQF -55-2 -May-Aug -2026 -Book.pdf: 32 artículo(s) extraído(s)
+2026-09-19 15:32:57,345 [INFO] etl_papers:   0034-7426/azraib.pdf: 1 artículo(s) extraído(s)
+2026-09-19 15:33:05,244 [INFO] etl_papers:   0034-7426/fer-hji-zer.pdf: 1 artículo(s) extraído(s)
+2026-09-19 15:33:10,066 [INFO] etl_papers:   0034-7426/lalili.pdf: 1 artículo(s) extraído(s)

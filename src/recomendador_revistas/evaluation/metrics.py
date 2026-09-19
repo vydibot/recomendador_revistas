@@ -1,6 +1,5 @@
-"""Métricas de evaluación para TF-IDF y SciBERT."""
+"""Compatibilidad con el módulo de métricas Top-N."""
 
+from .ranking_metrics import evaluate_recommendations
 
-def evaluate_recommendations(expected, predicted):
-    """Contrato para evaluar recomendaciones y rankings."""
-    raise NotImplementedError
+__all__ = ["evaluate_recommendations"]

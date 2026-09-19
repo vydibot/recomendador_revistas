@@ -1,10 +1,10 @@
 {
-  "alpha":0.5,
+  "alpha":1.0,
   "language":"auto",
   "pooling":"mean",
   "use_scibert":true,
   "scibert_model":"allenai\/scibert_scivocab_uncased",
-  "documents":405,
-  "tfidf_features":1239,
+  "documents":247,
+  "tfidf_features":47960,
   "scibert_dimension":768
 }

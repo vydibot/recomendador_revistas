@@ -69,14 +69,44 @@ extrae texto y metadatos:
   Los artículos bilingües generan dos registros con el mismo `issn` y
   `articulo_id`, uno por idioma.
 - Gold: `data/gold/articulos_tokens.parquet` — un registro por artículo con
-  `tokens_normalizados` (título + resumen + palabras clave tokenizados,
-  sin stopwords, lematizados). `data/gold/revistas_tokens.parquet` — una
-  bolsa de tokens agregada por ISSN con todos sus artículos.
+  `titulo_normalizado`, `resumen_normalizado`, `palabras_clave_normalizadas`
+  y `tokens_normalizados` (sin LaTeX, ecuaciones, `--`, tildes, stopwords y
+  con lematización ligera). `data/gold/revistas_tokens.parquet` — una bolsa
+  de tokens agregada por ISSN con todos sus artículos.
+- `data/gold/articulos_tokens.csv` — dataset de artículos con las columnas
+  originales `articulo_id`, `titulo`, `resumen`, `palabras_clave` e
+  `issn_normalizado`, además de sus campos normalizados. El ISSN es la revista
+  donde se publicó el paper y se usa como positivo automático: las métricas
+  miden recuperación de la revista de publicación, no relevancia experta
+  exhaustiva. Puede pasarse directamente a `evaluate_models.py`.
 
 La segmentación de artículos dentro de un PDF de número completo y la
-extracción de título son heurísticas basadas en texto plano (marcadores
-Resumen/Abstract + Palabras clave/Keywords); PDFs escaneados sin texto
-extraíble no producen artículos.
+extracción de título son heurísticas basadas en marcadores
+Resumen/Abstract + Palabras clave/Keywords. El extractor primero intenta
+preservar el layout del PDF, corrige palabras partidas entre líneas y usa OCR
+opcional para PDFs escaneados. Para activar OCR instala
+`.venv/bin/python -m pip install -e ".[pdf]"` y asegúrate de tener el binario
+Tesseract disponible en el sistema.
+
+Flujo recomendado completo:
+
+```bash
+# 1. Leer PDFs Bronze y reconstruir Silver/Gold de artículos
+.venv/bin/python src/recomendador_revistas/scripts/run_pipeline.py papers
+
+# 2. Entrenar TF-IDF + SciBERT con los artículos recién extraídos
+.venv/bin/python src/recomendador_revistas/scripts/train_thematic_profile.py
+
+# 3. Recomendar revistas usando título, resumen, keywords y prioridades
+.venv/bin/python src/recomendador_revistas/scripts/evaluate_manuscript.py \
+  --title "Título del manuscrito" \
+  --abstract "Resumen del manuscrito" \
+  --keywords "palabra clave 1, palabra clave 2" \
+  --language es \
+  --priority-order impacto,eficiencia,flujo \
+  --top-k 10 \
+  --output src/recomendador_revistas/reports/sugerencia_manuscrito.csv
+```
 
 El reporte APC escribe `src/recomendador_revistas/reports/apc_quality_summary.json` con los porcentajes
 de imputación, `reports/apc_missing_by_row.csv` con los faltantes de cada fila y

@@ -1,0 +1,38 @@
+2026-09-19 06:32:10,644 [INFO] pipeline: ╔══════════════════════════════════════════════════════════╗
+2026-09-19 06:32:10,644 [INFO] pipeline: ║  PIPELINE ETL — Recomendador de Revistas Científicas    ║
+2026-09-19 06:32:10,645 [INFO] pipeline: ║  Versión: 1.0.0           Fecha: 2026-09-19 06:32:10       ║
+2026-09-19 06:32:10,645 [INFO] pipeline: ╚══════════════════════════════════════════════════════════╝
+2026-09-19 06:32:10,645 [INFO] pipeline: 
+============================================================
+2026-09-19 06:32:10,645 [INFO] pipeline: CAPA PAPERS — Extracción de artículos PDF y tokens normalizados
+2026-09-19 06:32:10,645 [INFO] pipeline: ============================================================
+2026-09-19 06:33:29,729 [INFO] etl_papers:   0034-7418/RCCQF -55-2 -May-Aug -2026 -Book.pdf: 28 artículo(s) extraído(s)
+2026-09-19 06:33:31,266 [INFO] etl_papers:   0034-7426/azraib.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:34,704 [INFO] etl_papers:   0034-7426/fer-hji-zer.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:36,118 [INFO] etl_papers:   0034-7426/lalili.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:38,972 [INFO] etl_papers:   0034-7426/mec-abd-dec.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:40,023 [INFO] etl_papers:   0034-7426/rothman.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:43,503 [INFO] etl_papers:   0034-7426/talha.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:43,724 [INFO] etl_papers:   0072-0992/geocol,+Carta+Editorial.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:46,537 [INFO] etl_papers:   0072-0992/geocol,+artículo+2.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:48,775 [INFO] etl_papers:   0072-0992/geocol,+artículo+3.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:33:50,007 [INFO] etl_papers:   0072-0992/geocol,+artículo+4.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:33:51,955 [INFO] etl_papers:   0072-0992/geocol,+artículo+5.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:33:54,780 [INFO] etl_papers:   0072-0992/geocol,+artículo+6.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:33:57,615 [INFO] etl_papers:   0120-0283/Análisis+geométrico,+cinemático+y+dinámico+de+estructuras+vetiformes+en+el+sector+SE+del+Distrito+Minero+de+Vetas-California,+Santander,+Colombia.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:33:59,606 [INFO] etl_papers:   0120-0283/Aplicación+de+técnicas+de+clustering+y+machine+learning+en+Google+Earth+Engine+para+detectar+estructuras+asociadas+a+hidrógeno+natural.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:01,940 [INFO] etl_papers:   0120-0283/Inversión+conjunta+de+datos+TDEM+de+bajo+y+alto+momento+para+el+mejoramiento+de+los+modelos+del+subsuelo.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:04,962 [INFO] etl_papers:   0120-0283/Modelado+hidrológico+en+cuencas+andinas+de+Colombia+bajo+los+escenarios+de+cambio+climático+SSP4.5+y+SSP8.5.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:07,590 [INFO] etl_papers:   0120-0283/Predicción+mineralógica+a+partir+de+registros+de+pozos+mediante+aprendizaje+automático.+Estudio+de+caso+de+las+cuencas+del+Valle+Medio+del+Magdalena+y+Catatumbo+(Colombia).pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:10,030 [INFO] etl_papers:   0120-0283/Venas+hidrotermales+de+barita+en+rocas+metapelíticas+del+suroccidente+del+Macizo+de+Santander,+Colombia_+evidencias+de+ebullición+y+fluidos+moderadamente+salinos+ricos+en+sulfato.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:11,517 [INFO] etl_papers:   0120-0380/CatsigerasDOI.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:12,139 [INFO] etl_papers:   0120-0380/Goudet-Andrade-Mariano.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:12,363 [INFO] etl_papers:   0120-0380/Meleiro-Mariano.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:12,759 [INFO] etl_papers:   0120-0380/Tenorio-Mariano.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:34:13,792 [INFO] etl_papers:   0120-0380/carrilloDOI.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:14,320 [INFO] etl_papers:   0120-0380/najar.pdf: 6 artículo(s) extraído(s)
+2026-09-19 06:34:14,900 [INFO] etl_papers:   0120-0380/siqueira.pdf: 1 artículo(s) extraído(s)
+2026-09-19 06:34:16,077 [INFO] etl_papers:   0120-0488/14259-Junio2026 (1).pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:17,304 [INFO] etl_papers:   0120-0488/14259-Junio2026.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:18,114 [INFO] etl_papers:   0120-0488/14342_Thrips_Puno_25iii2026_publicar.pdf: 2 artículo(s) extraído(s)
+2026-09-19 06:34:19,630 [INFO] etl_papers:   0120-0488/14363+17+FEB (1).pdf: 2 artículo(s) extraído(s)

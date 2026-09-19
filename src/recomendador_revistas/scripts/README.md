@@ -11,6 +11,7 @@ Puntos de entrada disponibles:
 - `train_thematic_profile.py`: entrenamiento TF-IDF + SciBERT del Módulo A.
 - `evaluate_journal.py`: similitud de una revista contra el resto del Gold.
 - `evaluate_manuscript.py`: compara título, resumen y palabras clave contra el Gold.
+- `evaluate_models.py`: split 80/20 de manuscritos y evaluación Top-N (TF-IDF, SciBERT, fusión).
 
 Los futuros comandos de entrenamiento y evaluación se incorporarán aquí:
 

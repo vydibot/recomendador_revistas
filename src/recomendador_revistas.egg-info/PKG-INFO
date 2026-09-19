@@ -11,9 +11,14 @@ Requires-Dist: rapidfuzz
 Requires-Dist: unidecode
 Requires-Dist: lingua-language-detector
 Requires-Dist: pypdf
+Requires-Dist: fonttools
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Provides-Extra: nlp
 Requires-Dist: scikit-learn; extra == "nlp"
 Requires-Dist: transformers; extra == "nlp"
 Requires-Dist: torch; extra == "nlp"
+Provides-Extra: pdf
+Requires-Dist: pymupdf; extra == "pdf"
+Requires-Dist: pillow; extra == "pdf"
+Requires-Dist: pytesseract; extra == "pdf"

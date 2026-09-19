@@ -1,0 +1,10 @@
+2026-09-19 12:17:54,184 [INFO] pipeline: ╔══════════════════════════════════════════════════════════╗
+2026-09-19 12:17:54,184 [INFO] pipeline: ║  PIPELINE ETL — Recomendador de Revistas Científicas    ║
+2026-09-19 12:17:54,184 [INFO] pipeline: ║  Versión: 1.0.0           Fecha: 2026-09-19 12:17:54       ║
+2026-09-19 12:17:54,184 [INFO] pipeline: ╚══════════════════════════════════════════════════════════╝
+2026-09-19 12:17:54,184 [INFO] pipeline: 
+============================================================
+2026-09-19 12:17:54,184 [INFO] pipeline: Duración total de ejecución: 0.00 segundos
+2026-09-19 12:17:54,185 [INFO] pipeline: Log del pipeline registrado en: /home/vydi/recomendador_revistas/src/recomendador_revistas/logs/pipeline_20260919_121754.log
+2026-09-19 12:17:54,185 [INFO] pipeline: ============================================================
+2026-09-19 12:17:54,185 [INFO] pipeline: ✓ Pipeline finalizado exitosamente.

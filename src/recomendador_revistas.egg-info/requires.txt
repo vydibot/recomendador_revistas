@@ -6,6 +6,7 @@ rapidfuzz
 unidecode
 lingua-language-detector
 pypdf
+fonttools
 
 [dev]
 pytest
@@ -14,3 +15,8 @@ pytest
 scikit-learn
 transformers
 torch
+
+[pdf]
+pymupdf
+pillow
+pytesseract

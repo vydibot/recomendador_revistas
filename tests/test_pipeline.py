@@ -24,6 +24,7 @@ from recomendador_revistas.etl.sources.apc import (
     procesar_facts,
     procesar_openapc,
 )
+from recomendador_revistas.etl.sources import papers as papers_etl
 from recomendador_revistas.etl.gold import (
     construir_dataset_texto_modelos,
     cruce_multietapa,
@@ -321,3 +322,28 @@ def test_text_model_dataset_is_enriched_with_gold_features():
     assert enriched.loc[0, "fecha_incorporacion"] == "2020-01-01"
     assert enriched.loc[0, "h_index_zscore"] == 1.2
     assert enriched.loc[0, "h_index_minmax"] == 0.9
+
+
+def test_papers_gold_keeps_source_fields_and_normalized_text(tmp_path, monkeypatch):
+    """Valida que Gold conserve campos fuente y versiones normalizadas."""
+    monkeypatch.setattr(papers_etl, "ARTICULOS_GOLD", tmp_path / "articulos.parquet")
+    monkeypatch.setattr(papers_etl, "ARTICULOS_GOLD_CSV", tmp_path / "articulos.csv")
+    silver = pd.DataFrame({
+        "issn_normalizado": ["1234-5678"],
+        "articulo_id": ["paper_1"],
+        "archivo": ["paper.pdf"],
+        "idioma": ["es"],
+        "titulo": [r"Estudio -- clínico $x^2$"],
+        "resumen": ["Las políticas públicas mejoran resultados"],
+        "palabras_clave": ["salud, educación"],
+    })
+
+    processed = papers_etl.normalizar_papers(silver)
+    gold = papers_etl.construir_gold_articulos(processed)
+
+    assert "--" not in gold.loc[0, "tokens_normalizados"]
+    assert "clin" in gold.loc[0, "titulo_normalizado"]
+    assert gold.loc[0, "titulo"] == r"Estudio -- clínico $x^2$"
+    assert gold.loc[0, "resumen"] == "Las políticas públicas mejoran resultados"
+    assert gold.loc[0, "palabras_clave"] == "salud, educación"
+    assert gold.loc[0, "issn_normalizado"] == "1234-5678"

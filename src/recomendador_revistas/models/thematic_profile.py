@@ -24,6 +24,9 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from unidecode import unidecode
+
+from ..analysis.indices import DEFAULT_ORDER, build_indices
 
 
 LANGUAGE = Literal["es", "en", "auto"]
@@ -56,8 +59,10 @@ def clean_scientific_text(text: object) -> str:
     value = _LATEX_DELIMITER.sub(" ", value)
     value = _INLINE_MATH.sub(" ", value)
     value = _LATEX_COMMAND.sub(" ", value)
+    value = value.replace("--", " ")
     value = value.replace("{", " ").replace("}", " ")
-    value = _NON_WORD.sub(" ", value.lower())
+    value = unidecode(value.lower())
+    value = _NON_WORD.sub(" ", value)
     return _SPACE.sub(" ", value).strip()
 
 
@@ -69,11 +74,11 @@ def _lemma_token(token: str, language: LANGUAGE) -> str:
     """
     if len(token) <= 4 or any(character.isdigit() for character in token):
         return token
-    if language == "es":
+    if language in ("es", "auto"):
         for suffix in ("amientos", "imientos", "aciones", "mente", "ando", "iendo", "es", "os", "as"):
             if token.endswith(suffix) and len(token) - len(suffix) >= 4:
                 return token[: -len(suffix)]
-    if language == "en":
+    if language in ("en", "auto"):
         for suffix in ("ization", "ations", "ingly", "edly", "ing", "ed", "es", "s"):
             if token.endswith(suffix) and len(token) - len(suffix) >= 4:
                 return token[: -len(suffix)]
@@ -113,6 +118,30 @@ def build_journal_corpus(
         lambda value: preprocess_text(value, language)
     )
     return corpus[["issn_normalizado", "texto_modelo"]]
+
+
+def build_paper_journal_corpus(papers: pd.DataFrame) -> pd.DataFrame:
+    """Agrupa papers por ISSN para construir perfiles temáticos de revistas."""
+    required = {"issn_normalizado", "titulo", "resumen", "palabras_clave"}
+    missing = required - set(papers.columns)
+    if missing:
+        raise ValueError(f"Faltan columnas en papers: {sorted(missing)}")
+    rows = []
+    for _, row in papers.iterrows():
+        rows.append({
+            "issn_normalizado": str(row["issn_normalizado"]),
+            "texto_modelo": build_manuscript_text(
+                row["titulo"],
+                row["resumen"],
+                row["palabras_clave"],
+                language="auto",
+            ),
+        })
+    return (
+        pd.DataFrame(rows)
+        .groupby("issn_normalizado", as_index=False)["texto_modelo"]
+        .agg(" ".join)
+    )
 
 
 def build_manuscript_text(
@@ -187,16 +216,21 @@ class ThematicProfile:
         pooling: POOLING = "mean",
         scibert_model: str = "allenai/scibert_scivocab_uncased",
         use_scibert: bool = False,
+        scibert_batch_size: int = 8,
     ) -> None:
         if not 0.0 <= alpha <= 1.0:
             raise ValueError("alpha debe estar entre 0 y 1")
         if pooling not in {"mean", "cls"}:
             raise ValueError("pooling debe ser 'mean' o 'cls'")
+        if scibert_batch_size < 1:
+            raise ValueError("scibert_batch_size debe ser positivo")
         self.alpha = alpha
         self.language = language
         self.pooling = pooling
         self.scibert_model = scibert_model
         self.use_scibert = use_scibert
+        self.scibert_batch_size = scibert_batch_size
+        self.scibert_device = "cpu"
         self.vectorizer: TfidfVectorizer | None = None
         self.tfidf_matrix = None
         self.embedding_matrix: np.ndarray | None = None
@@ -231,25 +265,31 @@ class ThematicProfile:
                 return np.zeros((len(documents), 1), dtype=np.float32)
             self._tokenizer = AutoTokenizer.from_pretrained(self.scibert_model)
             self._encoder = AutoModel.from_pretrained(self.scibert_model)
+            self.scibert_device = "cuda" if torch.cuda.is_available() else "cpu"
+            self._device = torch.device(self.scibert_device)
+            self._encoder.to(self._device)
             self._encoder.eval()
             self._torch = torch
         vectors = []
-        with self._torch.no_grad():
-            for document in documents:
+        with self._torch.inference_mode():
+            for start in range(0, len(documents), self.scibert_batch_size):
+                document_batch = documents[start:start + self.scibert_batch_size]
                 batch = self._tokenizer(
-                    document,
+                    document_batch,
                     return_tensors="pt",
+                    padding=True,
                     truncation=True,
                     max_length=512,
                 )
+                batch = {key: value.to(self._device) for key, value in batch.items()}
                 output = self._encoder(**batch).last_hidden_state
                 if self.pooling == "cls":
                     vector = output[:, 0, :]
                 else:
                     mask = batch["attention_mask"].unsqueeze(-1)
                     vector = (output * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1)
-                vectors.append(vector.cpu().numpy()[0])
-        return np.asarray(vectors, dtype=np.float32)
+                vectors.append(vector.cpu().numpy())
+        return np.concatenate(vectors, axis=0).astype(np.float32)
 
     def score(self, manuscript: object) -> ThematicScores:
         """Calcula similitud TF-IDF, SciBERT y la ecuación de fusión."""
@@ -271,17 +311,48 @@ class ThematicProfile:
         thematic = self.alpha * tfidf_score + (1.0 - self.alpha) * scibert_score
         return ThematicScores(tfidf_score, scibert_score, thematic)
 
-    def recommend(self, manuscript: object, top_k: int = 10) -> pd.DataFrame:
-        """Devuelve revistas ordenadas por la similitud temática fusionada."""
+    def recommend(
+        self,
+        manuscript: object,
+        top_k: int = 10,
+        metadata: pd.DataFrame | None = None,
+        dimension_order: Sequence[str] = DEFAULT_ORDER,
+    ) -> pd.DataFrame:
+        """Devuelve revistas por score temático o por score temático + TOPSIS.
+
+        Cuando se entrega ``metadata``, el score final combina en partes iguales
+        la similitud temática y el índice de calidad-costo TOPSIS.
+        """
         if top_k < 1:
             raise ValueError("top_k debe ser positivo")
         scores = self.score(manuscript)
-        order = np.argsort(-scores.thematic)[:top_k]
+        if metadata is None:
+            order = np.argsort(-scores.thematic)[:top_k]
+            return pd.DataFrame({
+                "issn_normalizado": [self.identifiers[index] for index in order],
+                "score_tfidf": scores.tfidf[order],
+                "score_scibert": scores.scibert[order],
+                "score_tematico": scores.thematic[order],
+            })
+        indexed = build_indices(metadata, order=dimension_order).drop_duplicates("issn_normalizado")
+        quality = indexed.set_index("issn_normalizado")["indice_topsis_calidad_costo"]
+        quality_scores = np.array([float(quality.get(identifier, 0.5)) for identifier in self.identifiers])
+        thematic_min = scores.thematic.min()
+        thematic_range = scores.thematic.max() - thematic_min
+        thematic_normalized = (
+            np.full(len(scores.thematic), 0.5)
+            if thematic_range == 0
+            else (scores.thematic - thematic_min) / thematic_range
+        )
+        final_scores = 0.5 * thematic_normalized + 0.5 * quality_scores
+        order = np.argsort(-final_scores)[:top_k]
         return pd.DataFrame({
             "issn_normalizado": [self.identifiers[index] for index in order],
             "score_tfidf": scores.tfidf[order],
             "score_scibert": scores.scibert[order],
             "score_tematico": scores.thematic[order],
+            "score_calidad_costo": quality_scores[order],
+            "score_final": final_scores[order],
         })
 
     def compare_journal(
@@ -290,6 +361,7 @@ class ThematicProfile:
         metadata: pd.DataFrame | None = None,
         top_k: int = 10,
         exclude_self: bool = True,
+        dimension_order: Sequence[str] = DEFAULT_ORDER,
     ) -> pd.DataFrame:
         """Compara una revista Gold contra las demás usando artefactos entrenados."""
         if self.tfidf_matrix is None or self.embedding_matrix is None:
@@ -308,7 +380,22 @@ class ThematicProfile:
                 self.embedding_matrix[index:index + 1], self.embedding_matrix
             )[0]
         thematic_scores = self.alpha * tfidf_scores + (1.0 - self.alpha) * scibert_scores
-        order = np.argsort(-thematic_scores)
+        final_scores = thematic_scores
+        quality_scores = None
+        if metadata is not None and "issn_normalizado" in metadata.columns:
+            indexed = build_indices(metadata, order=dimension_order).drop_duplicates("issn_normalizado")
+            quality = indexed.set_index("issn_normalizado")["indice_topsis_calidad_costo"]
+            quality_scores = np.array([float(quality.get(identifier, 0.5)) for identifier in self.identifiers])
+            thematic_min = thematic_scores.min()
+            thematic_range = thematic_scores.max() - thematic_min
+            thematic_normalized = (
+                np.full(len(thematic_scores), 0.5)
+                if thematic_range == 0
+                else (thematic_scores - thematic_min) / thematic_range
+            )
+            final_scores = 0.5 * thematic_normalized + 0.5 * quality_scores
+
+        order = np.argsort(-final_scores)
         if exclude_self:
             order = order[order != index]
         order = order[:top_k]
@@ -319,6 +406,9 @@ class ThematicProfile:
             "score_scibert": scibert_scores[order],
             "score_tematico": thematic_scores[order],
         })
+        if quality_scores is not None:
+            result["score_calidad_costo"] = quality_scores[order]
+            result["score_final"] = final_scores[order]
         if metadata is not None and "issn_normalizado" in metadata.columns:
             extra = metadata.drop_duplicates("issn_normalizado").set_index("issn_normalizado")
             columns = [
