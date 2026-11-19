@@ -13,6 +13,7 @@ VERSION_PROCESO = "1.0.0"
 FECHA_CAPTURA = date.today().isoformat()
 
 # ── Rutas del proyecto ──────────────────────────────────────────────────────
+# Raíz del subproyecto ml/ dentro del monorepo; la documentación vive en la raíz.
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -23,7 +24,7 @@ SILVER_DIR = DATA_DIR / "silver"
 GOLD_DIR = DATA_DIR / "gold"
 
 LOGS_DIR = PACKAGE_ROOT / "logs"
-DOCS_DIR = PROJECT_ROOT / "docs"
+DOCS_DIR = PROJECT_ROOT.parent / "docs"
 REPORTS_DIR = PACKAGE_ROOT / "reports"
 
 # Crear directorios si no existen

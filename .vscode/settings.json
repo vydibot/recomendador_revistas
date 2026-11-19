@@ -1,0 +1,33 @@
+{
+    "latex-workshop.latex.rootFile.useSubFile": false,
+    "latex-workshop.latex.rootFile.indicator": "while",
+    "latex-workshop.latex.outDir": "%DIR%/build",
+    "latex-workshop.latex.autoBuild.run": "onSave",
+    "latex-workshop.latex.tools": [
+        {
+            "name": "pdflatex",
+            "command": "pdflatex",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-output-directory=%OUTDIR%",
+                "%DOC%"
+            ]
+        }
+    ],
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "pdflatex x2",
+            "tools": [
+                "pdflatex",
+                "pdflatex"
+            ]
+        }
+    ],
+    "latex-workshop.latex.recipe.default": "pdflatex x2",
+    "latex-workshop.view.pdf.viewer": "tab",
+    "files.exclude": {
+        "**/build": true
+    }
+}

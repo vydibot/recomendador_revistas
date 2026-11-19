@@ -91,13 +91,25 @@ Tesseract disponible en el sistema.
 Flujo recomendado completo:
 
 ```bash
-# 1. Leer PDFs Bronze y reconstruir Silver/Gold de artículos
+# 1. Validar fuentes Bronze y ejecutar ETL editorial
+.venv/bin/python src/recomendador_revistas/scripts/run_pipeline.py validate
+.venv/bin/python src/recomendador_revistas/scripts/run_pipeline.py
+
+# 2. Leer PDFs Bronze y reconstruir Silver/Gold de artículos
 .venv/bin/python src/recomendador_revistas/scripts/run_pipeline.py papers
 
-# 2. Entrenar TF-IDF + SciBERT con los artículos recién extraídos
+# 3. Evaluar sin fuga: alpha se selecciona en validación separada;
+#    la rejilla incluye 1.0 como baseline puro TF-IDF
+.venv/bin/python src/recomendador_revistas/scripts/evaluate_models.py \
+  --evaluation-csv src/recomendador_revistas/data/gold/articulos_tokens.csv \
+  --test-size 0.2 --seed 42 \
+  --alpha-grid 0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 \
+  --output-json src/recomendador_revistas/reports/model_eval_topn.json
+
+# 4. Entrenar el artefacto final con alpha validado
 .venv/bin/python src/recomendador_revistas/scripts/train_thematic_profile.py
 
-# 3. Recomendar revistas usando título, resumen, keywords y prioridades
+# 5. Recomendar revistas usando título, resumen, keywords y prioridades
 .venv/bin/python src/recomendador_revistas/scripts/evaluate_manuscript.py \
   --title "Título del manuscrito" \
   --abstract "Resumen del manuscrito" \
@@ -106,7 +118,16 @@ Flujo recomendado completo:
   --priority-order impacto,eficiencia,flujo \
   --top-k 10 \
   --output src/recomendador_revistas/reports/sugerencia_manuscrito.csv
+
+# 6. Compilar el paper corregido
+latexmk -pdf -interaction=nonstopmode -halt-on-error \
+  -outdir=informe/build informe/paper.tex
 ```
+
+La evaluación informa `train_queries=1510`, `alpha_fit_queries=1208`,
+`alpha_validation_queries=302`, `test_queries=377` y el número real de perfiles
+candidatos. La prueba no se usa para seleccionar `alpha`; los perfiles de
+validación se ajustan solo con los artículos del subconjunto de ajuste.
 
 El reporte APC escribe `src/recomendador_revistas/reports/apc_quality_summary.json` con los porcentajes
 de imputación, `reports/apc_missing_by_row.csv` con los faltantes de cada fila y

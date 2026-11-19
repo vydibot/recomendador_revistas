@@ -336,7 +336,7 @@ class ThematicProfile:
             })
         indexed = build_indices(metadata, order=dimension_order).drop_duplicates("issn_normalizado")
         quality = indexed.set_index("issn_normalizado")["indice_topsis_calidad_costo"]
-        quality_scores = np.array([float(quality.get(identifier, 0.5)) for identifier in self.identifiers])
+        quality_scores = np.array([float(quality.get(identifier, np.nan)) for identifier in self.identifiers])
         thematic_min = scores.thematic.min()
         thematic_range = scores.thematic.max() - thematic_min
         thematic_normalized = (
@@ -385,7 +385,7 @@ class ThematicProfile:
         if metadata is not None and "issn_normalizado" in metadata.columns:
             indexed = build_indices(metadata, order=dimension_order).drop_duplicates("issn_normalizado")
             quality = indexed.set_index("issn_normalizado")["indice_topsis_calidad_costo"]
-            quality_scores = np.array([float(quality.get(identifier, 0.5)) for identifier in self.identifiers])
+            quality_scores = np.array([float(quality.get(identifier, np.nan)) for identifier in self.identifiers])
             thematic_min = thematic_scores.min()
             thematic_range = thematic_scores.max() - thematic_min
             thematic_normalized = (
@@ -413,13 +413,41 @@ class ThematicProfile:
             extra = metadata.drop_duplicates("issn_normalizado").set_index("issn_normalizado")
             columns = [
                 column for column in (
-                    "titulo", "apc_monto_usd", "apc_tipo", "cuartil_sjr_ord",
+                    "titulo", "apc_monto_usd_real", "apc_monto_ppp_usd_real", "apc_tipo", "cuartil_sjr_ord",
                     "h_index", "indice_calidad_costo",
                 ) if column in extra.columns
             ]
             if columns:
                 result = result.join(extra[columns], on="issn_normalizado")
         return result
+
+    @classmethod
+    def load(cls, artifacts_dir: str | Path) -> "ThematicProfile":
+        """Reconstruye un perfil entrenado a partir de los artefactos de ``save``.
+
+        Los artefactos se deserializan con joblib (pickle): cargue solo
+        directorios generados por este proyecto, nunca de fuentes no confiables.
+        """
+        import json
+
+        import joblib
+
+        source = Path(artifacts_dir)
+        metadata = json.loads((source / "metadata.json").read_text(encoding="utf-8"))
+        profile = cls(
+            alpha=float(metadata["alpha"]),
+            language=metadata["language"],
+            pooling=metadata["pooling"],
+            scibert_model=metadata["scibert_model"],
+            use_scibert=bool(metadata.get("use_scibert", True)),
+        )
+        profile.vectorizer = joblib.load(source / "tfidf_vectorizer.joblib")
+        profile.tfidf_matrix = joblib.load(source / "tfidf_matrix.joblib")
+        profile.embedding_matrix = np.load(source / "scibert_embeddings.npy")
+        profile.identifiers = (
+            pd.read_csv(source / "journal_ids.csv")["issn_normalizado"].astype(str).tolist()
+        )
+        return profile
 
     def save(self, output_dir: str | Path) -> None:
         """Guarda vectorizador, matriz TF-IDF, embeddings e identificadores."""

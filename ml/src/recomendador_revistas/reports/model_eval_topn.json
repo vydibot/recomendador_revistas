@@ -1,0 +1,152 @@
+{
+  "dataset": "src/recomendador_revistas/data/gold/articulos_tokens.csv",
+  "journal_corpus": "papers_train_agrupados_por_issn",
+  "candidate_journals": 246,
+  "relevance_definition": "ISSN de la revista donde se publico el manuscrito; relevancia binaria",
+  "metric_averaging": "promedio macro sobre consultas; MAP y MRR sobre el ranking completo",
+  "software_versions": {
+    "python": "3.12.7",
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "scikit_learn": "1.9.1",
+    "torch": "2.14.0",
+    "transformers": "5.17.0"
+  },
+  "scibert_model": "allenai/scibert_scivocab_uncased",
+  "scibert_pooling": "mean",
+  "ground_truth": "revista_de_publicacion",
+  "train_queries": 1510,
+  "test_queries": 377,
+  "alpha_fit_queries": 1208,
+  "alpha_validation_queries": 302,
+  "test_size": 0.2,
+  "alpha_candidates": [
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0
+  ],
+  "best_alpha": 0.8,
+  "alpha_validation_curve": [
+    {
+      "alpha": 0.0,
+      "ndcg": 0.11985103436487708
+    },
+    {
+      "alpha": 0.1,
+      "ndcg": 0.20740656888620848
+    },
+    {
+      "alpha": 0.2,
+      "ndcg": 0.30736217701525803
+    },
+    {
+      "alpha": 0.3,
+      "ndcg": 0.38320119405683334
+    },
+    {
+      "alpha": 0.4,
+      "ndcg": 0.4478877920102024
+    },
+    {
+      "alpha": 0.5,
+      "ndcg": 0.49622826026147776
+    },
+    {
+      "alpha": 0.6,
+      "ndcg": 0.5331267404153188
+    },
+    {
+      "alpha": 0.7,
+      "ndcg": 0.5618914469227138
+    },
+    {
+      "alpha": 0.8,
+      "ndcg": 0.5746149346573365
+    },
+    {
+      "alpha": 0.9,
+      "ndcg": 0.5732926590784729
+    },
+    {
+      "alpha": 1.0,
+      "ndcg": 0.5729794655543432
+    }
+  ],
+  "tfidf": {
+    "queries": 377.0,
+    "precision@5": 0.16021220159151195,
+    "recall@5": 0.7288745737021599,
+    "f1@5": 0.25969432865984593,
+    "accuracy@5": 0.7347480106100795,
+    "hit_rate@5": 0.7347480106100795,
+    "ndcg@5": 0.6233243537119221,
+    "precision@10": 0.08753315649867374,
+    "recall@10": 0.7938613111026904,
+    "f1@10": 0.1564797609422356,
+    "accuracy@10": 0.7984084880636605,
+    "hit_rate@10": 0.7984084880636605,
+    "ndcg@10": 0.6445421562741,
+    "precision@20": 0.047877984084880636,
+    "recall@20": 0.8690160414298345,
+    "f1@20": 0.09034998540245916,
+    "accuracy@20": 0.8726790450928382,
+    "hit_rate@20": 0.8726790450928382,
+    "ndcg@20": 0.6640757712138204,
+    "map": 0.60457588392872,
+    "mrr": 0.6061320981928381
+  },
+  "scibert": {
+    "queries": 377.0,
+    "precision@5": 0.0376657824933687,
+    "recall@5": 0.16799292661361628,
+    "f1@5": 0.0607869142351901,
+    "accuracy@5": 0.1724137931034483,
+    "hit_rate@5": 0.1724137931034483,
+    "ndcg@5": 0.12044638231020593,
+    "precision@10": 0.027586206896551724,
+    "recall@10": 0.24889478337754198,
+    "f1@10": 0.049318939239363646,
+    "accuracy@10": 0.2546419098143236,
+    "hit_rate@10": 0.2546419098143236,
+    "ndcg@10": 0.1469374784756099,
+    "precision@20": 0.020026525198938994,
+    "recall@20": 0.36067955033472276,
+    "f1@20": 0.03775762246526864,
+    "accuracy@20": 0.3687002652519894,
+    "hit_rate@20": 0.3687002652519894,
+    "ndcg@20": 0.17567836946151416,
+    "map": 0.13492260412871296,
+    "mrr": 0.1350353898650789
+  },
+  "fused": {
+    "queries": 377.0,
+    "precision@5": 0.16074270557029177,
+    "recall@5": 0.7298219022356954,
+    "f1@5": 0.26064165719338134,
+    "accuracy@5": 0.7347480106100795,
+    "hit_rate@5": 0.7347480106100795,
+    "ndcg@5": 0.6262322013197542,
+    "precision@10": 0.08938992042440319,
+    "recall@10": 0.8093343438171023,
+    "f1@10": 0.15974130929662214,
+    "accuracy@10": 0.8143236074270557,
+    "hit_rate@10": 0.8143236074270557,
+    "ndcg@10": 0.6521778967006369,
+    "precision@20": 0.048673740053050404,
+    "recall@20": 0.8836049008462801,
+    "f1@20": 0.09185422828601239,
+    "accuracy@20": 0.8885941644562334,
+    "hit_rate@20": 0.8885941644562334,
+    "ndcg@20": 0.6713523166492168,
+    "map": 0.6093237054667858,
+    "mrr": 0.6108319926261234
+  }
+}

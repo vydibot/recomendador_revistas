@@ -32,7 +32,7 @@ _CRITERIA = {
         ("editorial_rapida", True),
         ("semanas_pub_minmax", False),
         ("semanas_submission_publicacion", False),
-        ("apc_monto_ppp_usd", False),
+        ("apc_monto_ppp_usd_real", False),
     ),
 }
 
@@ -49,13 +49,18 @@ def rank_sum_weights(order: Sequence[str] = DEFAULT_ORDER) -> dict[str, float]:
     }
 
 
-def _minmax(values: pd.Series) -> pd.Series:
+def _minmax(values: pd.Series, fill_missing: bool = True) -> pd.Series:
     numeric = pd.to_numeric(values, errors="coerce").astype("float64")
     if numeric.notna().sum() == 0:
-        return pd.Series(0.0, index=values.index)
-    filled = numeric.fillna(numeric.median())
+        return pd.Series(np.nan if not fill_missing else 0.0, index=values.index)
+    filled = numeric.fillna(numeric.median()) if fill_missing else numeric
     spread = filled.max() - filled.min()
-    return pd.Series(0.0, index=values.index) if spread == 0 else (filled - filled.min()) / spread
+    if spread == 0:
+        normalized = pd.Series(0.0, index=values.index)
+        if not fill_missing:
+            normalized[numeric.isna()] = np.nan
+        return normalized
+    return (filled - filled.min()) / spread
 
 
 def topsis_quality_cost_index(
@@ -82,8 +87,15 @@ def topsis_quality_cost_index(
         return result
 
     matrix = []
+    eligible = np.ones(len(result), dtype=bool)
     for dimension, column, benefit in criteria:
-        normalized = _minmax(result[column])
+        normalized = _minmax(
+            result[column],
+            fill_missing=column != "apc_monto_ppp_usd_real",
+        )
+        if column == "apc_monto_ppp_usd_real":
+            eligible &= normalized.notna().to_numpy()
+            normalized = normalized.fillna(0.0)
         if not benefit:
             normalized = 1.0 - normalized
         matrix.append(normalized.to_numpy(dtype=float) * weights[dimension])
@@ -99,6 +111,7 @@ def topsis_quality_cost_index(
         out=np.full(len(result), 0.5, dtype=float),
         where=denominator > 0,
     )
+    score[~eligible] = np.nan
     result["indice_topsis_calidad_costo"] = np.clip(score, 0.0, 1.0)
     result["indice_calidad_costo"] = result["indice_topsis_calidad_costo"]
     return result

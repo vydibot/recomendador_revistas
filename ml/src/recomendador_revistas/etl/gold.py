@@ -1,5 +1,5 @@
 """
-Módulo Gold: Integración, Cruce Multifuente, Imputación y Matriz de Características.
+Módulo Gold: Integración, costos observados/declarados y matriz de características.
 
 Consolida los datos limpios de Publindex, Scimago JR, DOAJ y OpenAPC:
 - Cruce primario por ISSN canónico normalizado.
@@ -7,7 +7,7 @@ Consolida los datos limpios de Publindex, Scimago JR, DOAJ y OpenAPC:
 - Resolución de conflictos con precedencias explícitas.
 - Transformación monetaria a USD y PPP USD para análisis de asequibilidad.
 - Detección de cobros atípicos mediante umbral de 3 rangos intercuartílicos (3 * IQR).
-- Imputación condicional de APC vía regresión multivariable con fallback a estrato cuartil-disciplina.
+- Exclusión de APC sin evidencia observada o declarada del perfil de costos.
 - Generación de variables binarias (exención LMIC, acceso diamante, revisión abierta, indexada DOAJ).
 - Codificación ordinal y análisis de contraste/brecha Publindex vs Scimago.
 - Estandarización de atributos continuos (Z-Score para PCA/distancias y Min-Max para visualización/scoring).
@@ -63,7 +63,6 @@ from ..data.normalization import (
     escalar_minmax,
     estandarizar_zscore,
     hash_registro,
-    imputar_apc,
     normalizar_titulo,
     similitud_titulos,
 )
@@ -267,22 +266,17 @@ def exportar_apc_observado_declarado(
     output_path: str | Path | None = None,
 ) -> pd.DataFrame:
     """
-    Exporta un dataset nuevo con solo APC real, es decir, observado o declarado,
-    excluyendo cualquier valor imputado.
+    Exporta un dataset nuevo con APC observado o declarado.
 
     No modifica el flujo principal del pipeline ni elimina datos antiguos:
     únicamente genera una vista adicional de APC con filas reales.
     """
     df = df.copy()
     tipo_col = "apc_tipo"
-    imputado_col = "apc_imputado"
-
     if tipo_col not in df.columns:
         return df.iloc[0:0].copy()
 
     mask = df[tipo_col].fillna("").astype(str).str.lower().isin({"observado", "declarado"})
-    if imputado_col in df.columns:
-        mask = mask & ~(df[imputado_col].fillna(False).astype(bool))
 
     filtered = df.loc[mask].copy()
 
@@ -446,8 +440,6 @@ def construir_dataset_texto_modelos(df: pd.DataFrame) -> pd.DataFrame:
         .str.lower()
         .isin({"observado", "declarado"})
     )
-    if "apc_imputado" in df.columns:
-        apc_real_mask &= ~df["apc_imputado"].fillna(False).astype(bool)
     for column in [
         "apc_monto_original",
         "apc_moneda_original",
@@ -556,8 +548,8 @@ def calcular_features_avanzadas(df: pd.DataFrame) -> pd.DataFrame:
     """
     Ejecuta el pipeline completo de Feature Engineering (Sección 8.1.2):
     - Detección de outliers en APC (3 * IQR).
-    - Imputación condicional de APC (regresión + estratos con flag apc_imputado).
-    - Cálculo de PPP USD para todas las revistas con APC (incluyendo imputadas).
+    - Conservación exclusiva de APC observado o declarado.
+    - Cálculo de PPP USD solo para APC con evidencia real.
     - Cálculo de variables binarias (exención LMIC, diamante, revisión abierta, DOAJ).
     - Codificación ordinal y métrica de contraste/brecha Publindex vs Scimago.
     - Estandarización continua Z-Score (para PCA/distancias).
@@ -578,19 +570,23 @@ def calcular_features_avanzadas(df: pd.DataFrame) -> pd.DataFrame:
     )
     logger.info("Outliers detectados en APC (3*IQR): %d", df["apc_es_outlier"].sum())
 
-    # 3. Imputación condicional de APC
-    df = imputar_apc(
-        df,
-        col_apc="apc_monto_usd",
-        col_editorial="editorial",
-        col_area="gran_area",
-        col_cuartil="cuartil_sjr",
-        col_hibrido="is_hybrid",
+    # 3. Conservar exclusivamente APC observado o declarado.
+    apc_original = pd.to_numeric(df.get("apc_monto_usd"), errors="coerce")
+    tipo_original = df.get("apc_tipo", pd.Series("", index=df.index)).fillna("").astype(str).str.lower()
+    apc_real_mask = (
+        apc_original.notna()
+        & tipo_original.isin({"observado", "declarado"})
     )
+    df["apc_monto_usd_real"] = apc_original.where(apc_real_mask)
+    df["apc_monto_ppp_usd_real"] = df.apply(
+        lambda row: convertir_a_ppp_usd(row["apc_monto_usd_real"], row.get("pais_iso")),
+        axis=1,
+    )
+    df["apc_monto_usd"] = apc_original.where(apc_real_mask)
 
-    # 4. Asegurar cálculo de PPP USD tras imputación
+    # 4. El costo final conserva exclusivamente APC observado/declarado.
     df["apc_monto_ppp_usd"] = df.apply(
-        lambda r: convertir_a_ppp_usd(r.get("apc_monto_usd"), r.get("pais_iso")),
+        lambda r: convertir_a_ppp_usd(r.get("apc_monto_usd_real"), r.get("pais_iso")),
         axis=1,
     )
 
@@ -619,20 +615,24 @@ def calcular_features_avanzadas(df: pd.DataFrame) -> pd.DataFrame:
         df["ratio_citas_docs"] = np.nan
 
     # 9. Índice compuesto calidad-costo
-    if "sjr_score" in df.columns and "apc_monto_usd" in df.columns:
+    if "sjr_score" in df.columns and "apc_monto_usd_real" in df.columns:
         sjr = pd.to_numeric(df["sjr_score"], errors="coerce").fillna(0.1)
-        apc = pd.to_numeric(df["apc_monto_usd"], errors="coerce").fillna(0.0)
+        apc = pd.to_numeric(df["apc_monto_usd_real"], errors="coerce")
         sjr_max = sjr.max() if sjr.max() > 0 else 1.0
-        apc_max = apc.max() if apc.max() > 0 else 1.0
+        apc_max = apc.max(skipna=True) if apc.notna().any() else 1.0
         sjr_n = sjr / sjr_max
         apc_n = apc / apc_max
-        df["indice_calidad_costo"] = np.where(apc_n > 0, sjr_n / (0.1 + apc_n), sjr_n * 2.0)
-        idx_max = df["indice_calidad_costo"].max()
+        df["indice_calidad_costo"] = np.where(
+            apc.notna() & (apc_n > 0),
+            sjr_n / (0.1 + apc_n),
+            np.nan,
+        )
+        idx_max = df["indice_calidad_costo"].max(skipna=True)
         if pd.notna(idx_max) and idx_max > 0:
             df["indice_calidad_costo"] = (df["indice_calidad_costo"] / idx_max).round(4)
 
     # 10. Estandarización continua Z-Score (para PCA y distancias)
-    cols_continuas = ["apc_monto_usd", "sjr_score", "h_index", "semanas_pub"]
+    cols_continuas = ["apc_monto_usd_real", "sjr_score", "h_index", "semanas_pub"]
     df = estandarizar_zscore(df, cols_continuas, sufijo="_zscore")
 
     # 11. Escalamiento continuo Min-Max [0, 1] (para visualización y scoring)
@@ -690,8 +690,8 @@ def merge_gold() -> pd.DataFrame:
     if antes_dedup != len(catalogo):
         logger.info("Duplicados eliminados en Gold: %d", antes_dedup - len(catalogo))
 
-    # 8. Feature Engineering avanzado (Limpieza, Outliers, Imputación, Z-score, MinMax, Binarias)
-    logger.info("Generando variables derivadas, imputación y transformaciones continuas...")
+    # 8. Feature Engineering avanzado sin completar costos ausentes.
+    logger.info("Generando variables derivadas y transformaciones continuas...")
     catalogo = calcular_features_avanzadas(catalogo)
 
     # 9. Hash de registro final
@@ -704,13 +704,13 @@ def merge_gold() -> pd.DataFrame:
     logger.info("Catálogo Maestro Parquet guardado: %s (%d revistas)", CATALOGO_GOLD, len(catalogo))
     logger.info("Catálogo Maestro CSV guardado: %s", CATALOGO_GOLD_CSV)
 
-    # 10.1. Exportación adicional de APC observado/declarado sin imputados
+    # 10.1. Exportación adicional de APC observado/declarado
     apc_real = exportar_apc_observado_declarado(
         catalogo,
         output_path=GOLD_DIR / "apc_observado_declarado.csv",
     )
     logger.info(
-        "CSV de APC real exportado: %s (%d registros no imputados)",
+        "CSV de APC real exportado: %s (%d registros)",
         GOLD_DIR / "apc_observado_declarado.csv",
         len(apc_real),
     )
@@ -752,13 +752,11 @@ def merge_gold() -> pd.DataFrame:
         "h_index",
         "h_index_zscore",
         "h_index_minmax",
-        "apc_monto_usd",
-        "apc_monto_usd_zscore",
-        "apc_monto_usd_minmax",
+        "apc_monto_usd_real",
+        "apc_monto_usd_real_zscore",
+        "apc_monto_usd_real_minmax",
         "apc_monto_ppp_usd",
         "apc_tipo",
-        "apc_imputado",
-        "apc_metodo_imputacion",
         "apc_es_outlier",
         "oa_diamond",
         "exencion_apc_lmic",
@@ -791,7 +789,6 @@ def merge_gold() -> pd.DataFrame:
     logger.info("  Total de revistas consolidadas : %d", len(catalogo))
     logger.info("  Revistas con APC observado     : %d", (catalogo["apc_tipo"] == "observado").sum())
     logger.info("  Revistas con APC declarado     : %d", (catalogo["apc_tipo"] == "declarado").sum())
-    logger.info("  Revistas con APC imputado      : %d", (catalogo["apc_imputado"] == True).sum())
     logger.info("  Revistas con Acceso Diamante   : %d", catalogo["oa_diamond"].sum())
     logger.info("  Revistas con Exención LMIC     : %d", catalogo["exencion_apc_lmic"].sum())
     logger.info("  Revistas con Revisión Abierta  : %d", catalogo["revision_abierta"].sum())

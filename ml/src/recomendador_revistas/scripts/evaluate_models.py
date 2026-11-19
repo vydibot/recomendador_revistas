@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 import numpy as np
@@ -72,52 +73,74 @@ def _score_queries(
     queries: pd.DataFrame,
     progress_label: str = "consultas",
 ) -> tuple[list[list[str]], list[list[str]], list[list[str]]]:
+    tfidf_scores, scibert_scores = _collect_query_scores(profile, queries, progress_label)
     ranked_tfidf = []
     ranked_scibert = []
     ranked_fused = []
+    for tfidf, scibert in zip(tfidf_scores, scibert_scores):
+        thematic = profile.alpha * tfidf + (1.0 - profile.alpha) * scibert
+        order_tfidf = np.argsort(-tfidf)
+        order_scibert = np.argsort(-scibert)
+        order_fused = np.argsort(-thematic)
+        ranked_tfidf.append([profile.identifiers[i] for i in order_tfidf])
+        ranked_scibert.append([profile.identifiers[i] for i in order_scibert])
+        ranked_fused.append([profile.identifiers[i] for i in order_fused])
+    return ranked_tfidf, ranked_scibert, ranked_fused
+
+
+def _collect_query_scores(
+    profile: ThematicProfile,
+    queries: pd.DataFrame,
+    progress_label: str = "consultas",
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    """Calcula cada representación una sola vez para reutilizarla por alpha."""
+    tfidf_scores = []
+    scibert_scores = []
     total = len(queries)
     report_every = max(1, total // 20)
     for position, (_, row) in enumerate(queries.iterrows(), start=1):
         manuscript = build_manuscript_text(
-            row["titulo"],
-            row["resumen"],
-            row["palabras_clave"],
-            language="auto",
+            row["titulo"], row["resumen"], row["palabras_clave"], language="auto"
         )
         scores = profile.score(manuscript)
-        order_tfidf = np.argsort(-scores.tfidf)
-        order_scibert = np.argsort(-scores.scibert)
-        order_fused = np.argsort(-scores.thematic)
-        ranked_tfidf.append([profile.identifiers[i] for i in order_tfidf])
-        ranked_scibert.append([profile.identifiers[i] for i in order_scibert])
-        ranked_fused.append([profile.identifiers[i] for i in order_fused])
+        tfidf_scores.append(scores.tfidf)
+        scibert_scores.append(scores.scibert)
         if position == 1 or position == total or position % report_every == 0:
             percentage = 100.0 * position / total if total else 100.0
-            print(
-                f"[evaluacion] {progress_label}: {position}/{total} ({percentage:.1f}%)",
-                flush=True,
-            )
-    return ranked_tfidf, ranked_scibert, ranked_fused
+            print(f"[evaluacion] {progress_label}: {position}/{total} ({percentage:.1f}%)", flush=True)
+    return tfidf_scores, scibert_scores
 
 
-def _select_alpha(train_queries: pd.DataFrame, profile: ThematicProfile, ks=(10,), candidates=np.linspace(0, 1, 11)) -> float:
+def _select_alpha(
+    train_queries: pd.DataFrame,
+    profile: ThematicProfile,
+    ks=(10,),
+    candidates=np.linspace(0, 1, 11),
+    return_curve: bool = False,
+) -> float | tuple[float, list[dict[str, float]]]:
     best_alpha = 0.5
     best_score = -1.0
+    curve = []
+    tfidf_scores, scibert_scores = _collect_query_scores(profile, train_queries, progress_label="representaciones")
     for alpha in candidates:
         profile.alpha = float(alpha)
         print(f"[evaluacion] ajustando alpha={alpha:.3f}", flush=True)
-        _, _, ranked = _score_queries(profile, train_queries, progress_label=f"alpha={alpha:.3f}")
+        ranked = []
+        for tfidf, scibert in zip(tfidf_scores, scibert_scores):
+            fused = alpha * tfidf + (1.0 - alpha) * scibert
+            ranked.append([profile.identifiers[index] for index in np.argsort(-fused)])
         metrics = evaluate_recommendations(
             rankings=ranked,
             relevant_sets=[set(items) for items in train_queries["relevantes"]],
             ks=ks,
         )
         score = metrics[f"ndcg@{ks[0]}"]
+        curve.append({"alpha": float(alpha), "ndcg": float(score)})
         if score > best_score:
             best_score = score
             best_alpha = float(alpha)
     profile.alpha = best_alpha
-    return best_alpha
+    return (best_alpha, curve) if return_curve else best_alpha
 
 
 def main() -> None:
@@ -143,16 +166,39 @@ def main() -> None:
         flush=True,
     )
 
-    train_papers = eval_df[eval_df["manuscrito_id"].astype(str).isin(train_ids)].copy()
-    print("[evaluacion] construyendo perfiles de revista con papers de train...", flush=True)
-    corpus = build_paper_journal_corpus(train_papers)
-    print(f"[evaluacion] perfiles construidos: {len(corpus)} revistas", flush=True)
-    print("[evaluacion] ajustando perfil TF-IDF/SciBERT...", flush=True)
-    profile = ThematicProfile(alpha=0.5, language="auto", pooling="mean", use_scibert=True).fit(corpus)
-    print(f"[evaluacion] perfil ajustado en dispositivo: {profile.scibert_device}", flush=True)
+    # Hold out part of development before selecting alpha. Otherwise each
+    # validation query is present in its journal profile.
+    alpha_fit_ids, alpha_validation_ids = _split_ids(sorted(train_ids), 0.2, args.seed + 1)
+    alpha_fit_queries = query_df[query_df["manuscrito_id"].astype(str).isin(alpha_fit_ids)].reset_index(drop=True)
+    alpha_validation_queries = query_df[
+        query_df["manuscrito_id"].astype(str).isin(alpha_validation_ids)
+    ].reset_index(drop=True)
+    alpha_fit_papers = eval_df[eval_df["manuscrito_id"].astype(str).isin(alpha_fit_ids)].copy()
+    print("[evaluacion] construyendo perfil de selección con papers de ajuste...", flush=True)
+    alpha_corpus = build_paper_journal_corpus(alpha_fit_papers)
+    print(f"[evaluacion] perfiles para alpha: {len(alpha_corpus)} revistas", flush=True)
+    print("[evaluacion] ajustando perfil TF-IDF/SciBERT para alpha...", flush=True)
+    alpha_profile = ThematicProfile(alpha=0.5, language="auto", pooling="mean", use_scibert=True).fit(alpha_corpus)
+    print(f"[evaluacion] perfil alpha ajustado en dispositivo: {alpha_profile.scibert_device}", flush=True)
 
     alpha_candidates = [float(x.strip()) for x in args.alpha_grid.split(",") if x.strip()]
-    best_alpha = _select_alpha(train_queries, profile, ks=(10,), candidates=alpha_candidates)
+    if not alpha_candidates or any(not 0.0 <= value <= 1.0 for value in alpha_candidates):
+        raise ValueError("alpha-grid debe contener valores en [0, 1]")
+    best_alpha, alpha_curve = _select_alpha(
+        alpha_validation_queries,
+        alpha_profile,
+        ks=(10,),
+        candidates=alpha_candidates,
+        return_curve=True,
+    )
+
+    train_papers = eval_df[eval_df["manuscrito_id"].astype(str).isin(train_ids)].copy()
+    print("[evaluacion] reconstruyendo perfil final con todo el entrenamiento...", flush=True)
+    corpus = build_paper_journal_corpus(train_papers)
+    print(f"[evaluacion] perfiles finales construidos: {len(corpus)} revistas", flush=True)
+    print("[evaluacion] ajustando perfil final TF-IDF/SciBERT...", flush=True)
+    profile = ThematicProfile(alpha=best_alpha, language="auto", pooling="mean", use_scibert=True).fit(corpus)
+    print(f"[evaluacion] perfil final ajustado en dispositivo: {profile.scibert_device}", flush=True)
 
     print("[evaluacion] evaluando conjunto de prueba...", flush=True)
     ranked_tfidf, ranked_scibert, ranked_fused = _score_queries(
@@ -170,12 +216,28 @@ def main() -> None:
     payload = {
         "dataset": str(args.evaluation_csv),
         "journal_corpus": "papers_train_agrupados_por_issn",
+        "candidate_journals": int(len(profile.identifiers)),
+        "relevance_definition": "ISSN de la revista donde se publico el manuscrito; relevancia binaria",
+        "metric_averaging": "promedio macro sobre consultas; MAP y MRR sobre el ranking completo",
+        "software_versions": {
+            "python": sys.version.split()[0],
+            "numpy": version("numpy"),
+            "pandas": version("pandas"),
+            "scikit_learn": version("scikit-learn"),
+            "torch": version("torch"),
+            "transformers": version("transformers"),
+        },
+        "scibert_model": "allenai/scibert_scivocab_uncased",
+        "scibert_pooling": "mean",
         "ground_truth": "revista_de_publicacion" if "articulos_tokens" in args.evaluation_csv.name else "issn_relevante_declarado",
         "train_queries": int(len(train_queries)),
         "test_queries": int(len(test_queries)),
+        "alpha_fit_queries": int(len(alpha_fit_queries)),
+        "alpha_validation_queries": int(len(alpha_validation_queries)),
         "test_size": float(args.test_size),
         "alpha_candidates": alpha_candidates,
         "best_alpha": best_alpha,
+        "alpha_validation_curve": alpha_curve,
         "tfidf": tfidf_metrics,
         "scibert": scibert_metrics,
         "fused": fused_metrics,

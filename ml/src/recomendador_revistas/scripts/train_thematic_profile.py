@@ -41,21 +41,40 @@ def main() -> None:
     train_ids, _ = _split_ids(
         queries["manuscrito_id"].astype(str).tolist(), args.test_size, args.seed
     )
-    train_queries = queries[queries["manuscrito_id"].astype(str).isin(train_ids)].reset_index(drop=True)
-    train_gold = gold[gold["articulo_id"].astype(str).isin(train_ids)].copy()
-    train_corpus = build_paper_journal_corpus(train_gold)
-    profile = ThematicProfile(
+    alpha_fit_ids, alpha_validation_ids = _split_ids(sorted(train_ids), 0.2, args.seed + 1)
+    alpha_fit_queries = queries[
+        queries["manuscrito_id"].astype(str).isin(alpha_fit_ids)
+    ].reset_index(drop=True)
+    alpha_validation_queries = queries[
+        queries["manuscrito_id"].astype(str).isin(alpha_validation_ids)
+    ].reset_index(drop=True)
+    alpha_fit_gold = gold[gold["articulo_id"].astype(str).isin(alpha_fit_ids)].copy()
+    alpha_fit_corpus = build_paper_journal_corpus(alpha_fit_gold)
+    alpha_profile = ThematicProfile(
         alpha=0.5,
         language="auto",
         pooling="mean",
         use_scibert=True,
-    ).fit(train_corpus)
+    ).fit(alpha_fit_corpus)
     alpha_candidates = [float(value.strip()) for value in args.alpha_grid.split(",") if value.strip()]
-    best_alpha = _select_alpha(train_queries, profile, ks=(10,), candidates=alpha_candidates)
+    if not alpha_candidates or any(not 0.0 <= value <= 1.0 for value in alpha_candidates):
+        raise ValueError("alpha-grid debe contener valores en [0, 1]")
+    best_alpha = _select_alpha(
+        alpha_validation_queries,
+        alpha_profile,
+        ks=(10,),
+        candidates=alpha_candidates,
+    )
 
-    # Alpha se selecciona sin tocar el conjunto reservado y luego se refitea
-    # el vectorizador y SciBERT sobre todo el corpus disponible.
+    # Alpha se selecciona sin consultar la prueba y luego se refitea el
+    # vectorizador y SciBERT sobre todo el corpus disponible.
     corpus = build_paper_journal_corpus(gold)
+    profile = ThematicProfile(
+        alpha=best_alpha,
+        language="auto",
+        pooling="mean",
+        use_scibert=True,
+    )
     profile.alpha = best_alpha
     profile.fit(corpus)
     profile.save(ARTIFACTS)

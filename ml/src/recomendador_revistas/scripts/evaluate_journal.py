@@ -1,12 +1,9 @@
 """Evalúa similitud de una revista Gold contra el resto del catálogo."""
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
-import joblib
-import numpy as np
 import pandas as pd
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -20,19 +17,7 @@ GOLD = PACKAGE_ROOT / "data" / "gold" / "catalogo_texto_tfidf_scibert_apc_real.c
 
 
 def load_profile() -> ThematicProfile:
-    metadata = json.loads((ARTIFACTS / "metadata.json").read_text())
-    profile = ThematicProfile(
-        alpha=float(metadata["alpha"]),
-        language=metadata["language"],
-        pooling=metadata["pooling"],
-        scibert_model=metadata["scibert_model"],
-        use_scibert=bool(metadata.get("use_scibert", True)),
-    )
-    profile.vectorizer = joblib.load(ARTIFACTS / "tfidf_vectorizer.joblib")
-    profile.tfidf_matrix = joblib.load(ARTIFACTS / "tfidf_matrix.joblib")
-    profile.embedding_matrix = np.load(ARTIFACTS / "scibert_embeddings.npy")
-    profile.identifiers = pd.read_csv(ARTIFACTS / "journal_ids.csv")["issn_normalizado"].astype(str).tolist()
-    return profile
+    return ThematicProfile.load(ARTIFACTS)
 
 
 def main() -> None:

@@ -1,6 +1,48 @@
+# ── Python ────────────────────────────────────────────────────────────────
 .venv/
 .venv_local/
 __pycache__/
 *.py[cod]
+*.egg-info/
 .pytest_cache/
-src/recomendador_revistas/data/bronze/papers/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ── Datos pesados del pipeline ML (PDF de artículos, ~2.6 GB) ────────────
+ml/src/recomendador_revistas/data/bronze/papers/
+
+# ── Backend: base SQLite local de desarrollo ─────────────────────────────
+backend/*.db
+backend/*.db-journal
+
+# ── Frontend ─────────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# ── LaTeX (informe) ──────────────────────────────────────────────────────
+docs/informe/build/
+docs/informe/*.aux
+docs/informe/*.fdb_latexmk
+docs/informe/*.fls
+docs/informe/*.log
+docs/informe/*.out
+docs/informe/*.synctex.gz
+
+# ── Entorno y secretos ───────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ── Prototipo original (repositorio git independiente vydibot/LIDER-APP).
+# Su código ya está migrado a frontend/ y sus datos a backend/seed/.
+# Se ignora para no incrustarlo como sub-repositorio; puede eliminarse.
+LIDER APP/
+
+# ── Editor / SO ──────────────────────────────────────────────────────────
+.DS_Store
+.idea/

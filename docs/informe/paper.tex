@@ -1,0 +1,588 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,portuguese,english]{babel}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.7cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,decorations.pathreplacing}
+
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.65em}
+
+% ---------- Paleta y estilos comunes de las figuras ----------
+\definecolor{cteal}{HTML}{0F6E56}
+\definecolor{cpurple}{HTML}{534AB7}
+\definecolor{cgray}{HTML}{5F5E5A}
+
+\tikzset{
+  src/.style={draw=cgray, fill=cgray!12, rounded corners=2pt, align=center,
+              minimum height=0.95cm, inner sep=3pt, font=\footnotesize\sffamily},
+  dat/.style={draw=cteal, fill=cteal!12, rounded corners=2pt, align=center,
+              minimum height=0.95cm, inner sep=3pt, font=\footnotesize\sffamily},
+  mod/.style={draw=cpurple, fill=cpurple!12, rounded corners=2pt, align=center,
+              minimum height=0.95cm, inner sep=3pt, font=\footnotesize\sffamily},
+  lane/.style={fill=black!4, rounded corners=3pt},
+  lab/.style={font=\footnotesize\sffamily\bfseries, align=center, text width=1.9cm},
+  flow/.style={-{Latex[length=2.2mm]}, thick, cgray},
+  note/.style={draw=cgray, dashed, rounded corners=2pt, align=center,
+               font=\scriptsize\sffamily, inner sep=3pt}
+}
+
+\title{Prototipo reproducible de recomendación de revistas para investigadores colombianos: similitud temática y perfil de costos}
+\author{Jairo Arturo Barrera Mosquera\textsuperscript{1} \\ Carlos Andres Martinez Alayon\textsuperscript{1} \\ Edgar Alirio Aguirre Buenaventura\textsuperscript{1} \\
+\small \textsuperscript{1}Universidad Distrital Francisco José de Caldas, Bogotá, Colombia \\
+\small ORCID: no informado por los autores}
+\date{Septiembre de 2026}
+
+\addto\captionsspanish{\renewcommand{\tablename}{Tabla}}
+
+\begin{document}
+\maketitle
+
+\section*{Resumen}
+La selección de una revista científica exigió conciliar afinidad temática, costos de procesamiento de artículos, tiempos editoriales e indicadores de calidad provenientes de fuentes heterogéneas. Esta dificultad fue especialmente relevante para investigadores colombianos, quienes debieron considerar índices internacionales, la clasificación nacional Publindex y restricciones presupuestales.
+
+En este artículo se implementó un sistema que integró información de Publindex, Scimago Journal \& Country Rank, DOAJ, OpenAPC y Facts mediante un pipeline de extracción, transformación y carga. Se procesaron 1.825 PDF, se obtuvieron 3.786 artículos, se construyeron 247 perfiles temáticos y se consolidó un catálogo editorial de 906 revistas. Los manuscritos y perfiles se representaron con TF--IDF y SciBERT, y sus similitudes se combinaron con $\alpha=0.8$.
+
+La evaluación se realizó como un problema de ranking Top--N con 377 consultas de prueba y una rejilla de $\alpha$ que incluyó el baseline puro TF--IDF ($\alpha=1.0$). La fusión obtuvo MRR=0.6108, MAP=0.6093 y NDCG@10=0.6522. Estos valores son evidencia inicial de recuperación automática: la relevancia se definió mediante la revista histórica de publicación, sin validación experta, por lo que no representan aceptación editorial ni superioridad frente a investigadores.
+
+El resultado fue una base trazable y un modelo híbrido explicable para apoyar decisiones de publicación. La capa TOPSIS de costos y preferencias quedó implementada, pero su utilidad externa con investigadores todavía no fue validada.
+
+\textbf{Palabras clave:} revistas científicas; sistemas de recomendación; procesamiento de lenguaje natural; costos de publicación; Publindex; modelos híbridos.
+
+\section*{Abstract}
+\selectlanguage{english}
+Selecting a scientific journal required balancing thematic affinity, article processing charges, editorial timelines, and quality indicators obtained from heterogeneous sources. This challenge was particularly relevant for Colombian researchers, who had to consider international indexes, the national Publindex classification, and budget constraints.
+
+This paper reports an implemented system that integrated Publindex, Scimago Journal \& Country Rank, DOAJ, OpenAPC, and Facts through an extraction, transformation, and loading pipeline. The execution processed 1,825 PDFs and produced 3,786 articles, 247 thematic journal profiles, and a 906-journal editorial catalog. Manuscripts and profiles were represented with TF--IDF and SciBERT, fused with $\alpha=0.8$.
+
+The system was evaluated as a Top--N ranking problem on 377 test queries, including $\alpha=1.0$ as the pure TF--IDF baseline. The fusion obtained MRR=0.6108, MAP=0.6093, and NDCG@10=0.6522. These results are initial evidence of automatic retrieval because relevance was defined by the historical publication journal and no expert validation was performed. TOPSIS was implemented as a cost and preference layer, but its external usefulness with researchers remains unvalidated.
+
+\textbf{Keywords:} scientific journals; recommender systems; natural language processing; publication costs; Publindex; hybrid models.
+
+\section*{Resumo}
+\selectlanguage{portuguese}
+A seleção de uma revista científica exigiu equilibrar afinidade temática, custos de processamento de artigos, tempos editoriais e indicadores de qualidade provenientes de fontes heterogêneas. Essa necessidade foi especialmente relevante para pesquisadores colombianos, que deveriam considerar índices internacionais, a classificação Publindex e restrições orçamentárias.
+
+Este artigo relata um sistema implementado que integrou dados de Publindex, Scimago Journal \& Country Rank, DOAJ, OpenAPC e Facts por meio de um pipeline de extração, transformação e carga. A execução processou 1.825 PDFs e produziu 3.786 artigos, 247 perfis temáticos e um catálogo editorial de 906 revistas. Manuscritos e perfis foram representados com TF--IDF e SciBERT, combinados com $\alpha=0.8$.
+
+A avaliação foi formulada como ranking Top--N em 377 consultas de teste e incluiu $\alpha=1.0$ como baseline puro de TF--IDF. A fusão obteve MRR=0.6108, MAP=0.6093 e NDCG@10=0.6522. Esses resultados são evidência inicial de recuperação automática, pois a relevância foi definida pela revista histórica de publicação e não foi realizada validação por especialistas. O TOPSIS foi implementado, mas sua utilidade externa com pesquisadores ainda não foi validada.
+
+\textbf{Palavras-chave:} revistas científicas; sistemas de recomendação; processamento de linguagem natural; custos de publicação; Publindex; modelos híbridos.
+\selectlanguage{spanish}
+
+\section{Introducción}
+Elegir una revista científica adecuada es una decisión crítica del ciclo de investigación. Una selección desalineada con el tema del manuscrito puede producir rechazos editoriales, retrasos y uso ineficiente del trabajo de autores y revisores. Para investigadores colombianos, la decisión también está condicionada por los cargos por procesamiento de artículos (APC), los tiempos editoriales, la clasificación Publindex y los indicadores internacionales de visibilidad.
+
+La información necesaria para comparar estas variables se encuentra distribuida entre directorios, portales editoriales, archivos descargables y fuentes bibliométricas. Además, las fuentes no siempre comparten identificadores, definiciones o fechas de actualización. El investigador debe, por tanto, resolver simultáneamente un problema de similitud temática, integración de datos y decisión multicriterio.
+
+Los sistemas de recomendación académica suelen utilizar filtrado basado en contenido mediante TF--IDF, LSA o embeddings. Estas representaciones son útiles cuando no existe historial de usuarios, pero pueden ignorar restricciones económicas y criterios nacionales. El presente trabajo aborda esa brecha mediante una arquitectura que separa la construcción de datos, el perfil temático y el ranking de calidad, costo y eficiencia.
+
+El objetivo es implementar y evaluar un recomendador reproducible que permita comparar revistas a partir del título, resumen y palabras clave de un manuscrito, incorporando además información de APC, impacto bibliométrico, flujo citacional y tiempos editoriales. La evaluación automática utiliza la revista de publicación como referencia observada; no se presentan resultados de valoración experta porque dicha fase no fue realizada.
+
+Las contribuciones verificables de este trabajo son: (i) un ETL trazable que integra fuentes editoriales y 3.786 artículos PDF; (ii) una comparación reproducible entre TF--IDF, SciBERT y su combinación con selección de $\alpha$; y (iii) un perfil multicriterio construido únicamente con APC observado o declarado.
+
+\section{Trabajo relacionado}
+Los sistemas de recomendación de revistas suelen formularse como filtrado basado en contenido, donde el manuscrito se compara con el alcance o el corpus histórico de una revista. Los enfoques híbridos combinan esta afinidad con señales bibliométricas o decisiones multicriterio \cite{abbasi2020,huynh2022,ajmal2023}. En el contexto latinoamericano, las clasificaciones nacionales introducen requisitos que no están presentes en los recomendadores restringidos a una editorial o a una única base bibliométrica \cite{vasen2017}.
+
+La dimensión económica también es relevante: los APC observados y declarados pueden diferir por moneda, modalidad de acceso y acuerdos institucionales, y sus determinantes han sido estudiados con fuentes como OpenAPC \cite{budzinski2020}. Para la representación textual, los embeddings científicos permiten modelar relaciones semánticas que no dependen exclusivamente de la coincidencia exacta de términos \cite{thierry2023,beltagy2019}. Finalmente, la selección de métricas Top--N debe considerar el orden de las recomendaciones y no solo la recuperación no ordenada \cite{ovono2024}.
+
+La diferencia de este trabajo es que articula esas líneas en un flujo reproducible orientado a investigadores colombianos: integración por ISSN, extracción de artículos PDF, representación temática, tratamiento explícito de APC real y ranking multicriterio con preferencias del usuario.
+
+\section{Formulación del problema}
+Sea $q$ un manuscrito compuesto por título, resumen y palabras clave, y sea $\mathcal{R}=\{r_1,\ldots,r_R\}$ el catálogo de revistas. Para cada revista se dispone de un perfil textual, atributos bibliométricos y, cuando existe, un APC observado o declarado. El sistema debe producir una permutación $\pi_q$ de $\mathcal{R}$ tal que las primeras posiciones maximicen la afinidad temática y respeten las preferencias de impacto, eficiencia y flujo.
+
+La función temática es $S_T(q,r)$ y el perfil multicriterio es $C(r\mid u)$, donde $u$ representa el orden de prioridades del investigador. Se fijó $\beta=0.5$ como combinación neutral entre afinidad temática y utilidad editorial, porque no se dispuso de valoraciones expertas ni de una calibración externa que justificara priorizar una rama. El ranking implementado fue:
+\begin{equation}
+S(q,r\mid u)=\beta\,\widetilde{S}_T(q,r)+(1-\beta)C(r\mid u),\qquad \beta=0.5.
+\end{equation}
+Los criterios de costo que no tuvieron APC observado o declarado se conservaron como no disponibles y no participaron en la construcción de $C$; no se imputó un costo neutral.
+
+\section{Metodología}
+
+\subsection{Arquitectura y datos}
+El sistema utiliza una arquitectura ETL por capas. La capa Bronze conserva los archivos originales: listados de Publindex, Scimago, DOAJ, OpenAPC, Facts y los PDF de artículos organizados por ISSN. La capa Silver normaliza tipos, identificadores, monedas y campos de cada fuente. La capa Gold integra los registros, calcula variables derivadas y produce dos productos textuales: artículos tokenizados y perfiles agregados por revista.
+
+La Figura~\ref{fig:arquitectura} resume el flujo de extremo a extremo. Silver separa explícitamente cuatro procesos (entidades, costos, texto y calidad); Gold produce el catálogo, el corpus y los perfiles; y los índices léxico, vectorial y de atributos se mantienen como productos diferenciados. La banda inferior resume el versionado, el linaje y la evaluación, que aplican a todas las capas. La clave de integración principal es el ISSN normalizado; cuando no existe coincidencia exacta se utiliza una comparación controlada de títulos. Cada etapa conserva archivos intermedios para facilitar la auditoría y repetir únicamente la fase que haya cambiado.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+% carriles
+\foreach \y in {0,-1.65,-3.3,-4.95,-6.6,-8.25}{\fill[lane] (0,\y-0.68) rectangle (15.6,\y+0.68);}
+\fill[lane] (0,-9.9-0.45) rectangle (15.6,-9.9+0.45);
+% etiquetas de capa
+\node[lab] (l0) at (1.0,0) {Fuentes};
+\node[lab] (l1) at (1.0,-1.65) {Bronze};
+\node[lab] (l2) at (1.0,-3.3) {Silver};
+\node[lab] (l3) at (1.0,-4.95) {Gold};
+\node[lab] (l4) at (1.0,-6.6) {Índices};
+\node[lab] (l5) at (1.0,-8.25) {Servicio};
+\node[lab] (l6) at (1.0,-9.9) {Transversal};
+\foreach \a/\b in {l0/l1,l1/l2,l2/l3,l3/l4,l4/l5}{\draw[flow] (\a.south) -- (\b.north);}
+% fuentes
+\foreach \x/\t/\s in {3.46/Publindex/{categoría nacional},6.18/Scimago/{SJR y cuartil},8.90/DOAJ/{APC declarado},11.62/{OpenAPC, Facts}/{pagos observados},14.34/{Artículos}/{1.825 archivos PDF}}{
+  \node[src, minimum width=2.52cm] at (\x,0) {\textbf{\t}\\[-1pt]{\scriptsize\s}};
+}
+% bronze
+\node[dat, minimum width=13.4cm] at (8.9,-1.65) {\textbf{Archivos originales sin modificar}\\[-1pt]{\scriptsize hash y fecha de captura}};
+% silver
+\foreach \x/\t/\s in {3.8/Entidades/{ISSN y títulos},7.2/Costos/{moneda y APC real},10.6/Texto/{PDF, OCR e idioma},14.0/Calidad/{tipos y faltantes}}{
+  \node[dat, minimum width=3.2cm] at (\x,-3.3) {\textbf{\t}\\[-1pt]{\scriptsize\s}};
+}
+% gold
+\node[dat, minimum width=3.9cm] (gcat) at (4.15,-4.95) {\textbf{Catálogo}\\[-1pt]{\scriptsize 906 revistas}};
+\node[dat, minimum width=3.9cm] (gcor) at (8.9,-4.95) {\textbf{Corpus}\\[-1pt]{\scriptsize 3.786 artículos}};
+\node[dat, minimum width=3.9cm] (gper) at (13.65,-4.95) {\textbf{Perfiles}\\[-1pt]{\scriptsize 247 ISSN}};
+\draw[flow] (gcor.east) -- (gper.west);
+% indices
+\node[mod, minimum width=3.9cm] at (4.15,-6.6) {\textbf{Léxico}\\[-1pt]{\scriptsize TF--IDF}};
+\node[mod, minimum width=3.9cm] at (8.9,-6.6) {\textbf{Vectorial}\\[-1pt]{\scriptsize SciBERT, 768D}};
+\node[mod, minimum width=3.9cm] at (13.65,-6.6) {\textbf{Atributos}\\[-1pt]{\scriptsize TOPSIS con APC real}};
+% servicio
+\node[mod, minimum width=13.4cm] at (8.9,-8.25) {\textbf{Ranking híbrido y explicación}\\[-1pt]{\scriptsize afinidad temática + perfil multicriterio $\rightarrow$ Top--N}};
+% transversal
+\node[note, minimum width=13.4cm, minimum height=0.7cm] at (8.9,-9.9) {versionado de datos \,·\, linaje \,·\, hashes \,·\, evaluación offline};
+% leyenda
+\node[src, minimum width=0.45cm, minimum height=0.25cm] at (2.45,-11.0) {};
+\node[anchor=west, font=\scriptsize\sffamily] at (2.75,-11.0) {Fuentes};
+\node[dat, minimum width=0.45cm, minimum height=0.25cm] at (5.0,-11.0) {};
+\node[anchor=west, font=\scriptsize\sffamily] at (5.3,-11.0) {Datos (ETL)};
+\node[mod, minimum width=0.45cm, minimum height=0.25cm] at (8.0,-11.0) {};
+\node[anchor=west, font=\scriptsize\sffamily] at (8.3,-11.0) {Modelo y servicio};
+\end{tikzpicture}
+\caption{Arquitectura de datos y recomendación por capas. Los conteos corresponden a la ejecución actual.}
+\label{fig:arquitectura}
+\end{figure}
+
+En Bronze se evita modificar las fuentes originales. En Silver se registran el archivo de procedencia, el idioma, el método de extracción y un hash del artículo. En Gold se agregan los artículos por ISSN, se generan tokens normalizados y se integran las variables bibliométricas y económicas. Esta separación evita que un cambio en el modelo destruya la evidencia de adquisición.
+
+La extracción de PDF utiliza primero texto nativo conservando el layout, corrige palabras partidas por saltos de línea y dispone de un fallback para documentos escaneados. Los artículos se identifican mediante marcadores de resumen/abstract y palabras clave/keywords. El texto se limpia de comandos LaTeX, ecuaciones, símbolos y palabras vacías, y se aplica una lematización ligera reproducible.
+
+La versión ejecutada produjo 3.786 registros de artículos y 247 perfiles de revista agrupados por ISSN. El catálogo editorial Gold contiene 906 revistas. Estos conteos describen la cobertura efectiva del estado de los datos y no implican que todas las revistas tengan la misma disponibilidad de atributos.
+
+La reproducibilidad se fijó con fecha de corte correspondiente a los snapshots Bronze disponibles (Publindex: 10-09-2026; DOAJ: 12-08-2026; Scimago: snapshot 2025), semilla 42 y partición por identificador de manuscrito. La evaluación separó 1.510 consultas de desarrollo de 377 de prueba; para seleccionar $\alpha$, el desarrollo se dividió adicionalmente en 1.208 consultas de ajuste y 302 de validación. Se usó Python 3.12.7, pandas 3.0.5, NumPy 2.5.3, scikit-learn 1.9.1, PyTorch 2.14.0+cu130 y Transformers 5.17.0; el modelo fue \texttt{allenai/scibert\_scivocab\_uncased}, pooling mean, 768 dimensiones. La normalización trató textos en español e inglés con detección automática y stopwords de ambos idiomas. Las 1.825 fuentes PDF produjeron 3.786 registros, de los cuales se construyeron 246 perfiles candidatos en la evaluación de prueba; los 247 perfiles corresponden al corpus Gold completo disponible.
+
+\begin{table}[htbp]
+\centering
+\caption{Fuentes y productos observados en la ejecución actual.}
+\label{tab:fuentes}
+\small
+\begin{tabular}{p{2.8cm}p{2.2cm}p{4.2cm}p{2.3cm}}
+\toprule
+Fuente/producto & Registros & Campos o función principal & Captura/estado \\
+\midrule
+Publindex Silver & 906 & ISSN, categoría nacional, título & 10-09-2026 \\
+Scimago Silver & 166 & SJR, cuartil, H-index, áreas & snapshot 2025 \\
+DOAJ Silver & 23.304 & APC declarado, acceso, licencia, país & 12-08-2026 \\
+OpenAPC Silver & 12.242 & pagos APC observados, moneda, editorial & fuente local \\
+Facts Silver & 12.583 & pagos APC observados complementarios & fuente local \\
+Papers Gold & 3.786 & título, resumen, keywords y tokens & 1.825 PDF \\
+Catálogo Gold & 906 & atributos integrados y TOPSIS real & proceso 1.0.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Las fechas corresponden a los nombres o metadatos de los snapshots disponibles y no deben interpretarse como fechas de actualización universal de las fuentes. Los PDF originales tienen restricciones de derechos de autor; para reproducibilidad se deben compartir identificadores, hashes y scripts, no los archivos completos.
+
+\subsection{Extracción y normalización de artículos}
+Cada PDF se procesa con una estrategia escalonada. Primero se intenta extraer la capa textual nativa conservando el orden visual; después se utiliza un extractor alternativo para documentos que presentan problemas de codificación. El OCR queda reservado para archivos sin suficiente texto extraíble. La detección de artículos busca pares de marcadores como ``Resumen''/``Abstract'' y ``Palabras clave''/``Keywords''. La ventana anterior al resumen se usa para estimar el título y se eliminan encabezados o pies repetidos.
+
+El texto se normaliza convirtiendo ligaduras, reparando palabras divididas por guiones de salto de línea, eliminando comandos LaTeX y ecuaciones, unificando espacios y aplicando transliteración reproducible. La tokenización elimina stopwords en español e inglés y aplica reglas conservadoras de lematización. El resultado conserva tanto el texto original como las columnas normalizadas, de modo que es posible inspeccionar la extracción antes del modelado.
+
+\subsection{Variables editoriales y tratamiento de APC}
+Las variables de costo utilizan exclusivamente APC observado o declarado: 380 registros observados y 25 declarados, 405 en total. Los registros sin evidencia real se excluyen del perfil de costos. Los valores atípicos se auditan mediante el criterio de tres rangos intercuartílicos; ningún valor estimado reemplaza un costo faltante.
+
+Las variables continuas se convierten a Z-score cuando se requieren distancias estadísticas y a Min--Max cuando participan en el ranking. Los criterios de impacto incluyen SJR, H-index y cuartil ordinal; los de flujo incluyen citas, citas por documento, razón citas/documentos y volumen documental; los de eficiencia incluyen rapidez editorial, semanas hasta publicación y costo PPP real. Cuando no existe APC observado o declarado, el componente de costo queda como no disponible y no recibe un valor neutral artificial.
+
+\subsection{Representación temática}
+Para un término $t$, un documento $d$ y una colección de $N$ documentos, el peso TF--IDF se calcula como:
+\begin{equation}
+\operatorname{tfidf}(t,d)=\operatorname{tf}(t,d)\log\left(\frac{N}{\operatorname{df}(t)}\right).
+\end{equation}
+
+El manuscrito se construye concatenando título, resumen y palabras clave. El corpus de cada revista se construye concatenando los textos de sus artículos. La similitud léxica se calcula mediante coseno:
+\begin{equation}
+S_{\mathrm{TFIDF}}(q,r)=\frac{\mathbf{q}\cdot\mathbf{r}}{\|\mathbf{q}\|\|\mathbf{r}\|}.
+\end{equation}
+
+SciBERT, con 768 dimensiones, genera un embedding para cada documento mediante el promedio enmascarado de los vectores de tokens. La similitud contextual se calcula de forma análoga:
+\begin{equation}
+S_{\mathrm{SciBERT}}(q,r)=\frac{\mathbf{e}_q\cdot\mathbf{e}_r}{\|\mathbf{e}_q\|\|\mathbf{e}_r\|}.
+\end{equation}
+
+La fusión temática se definió mediante:
+\begin{equation}
+S_{\text{temático}}(q,r)=\alpha S_{\mathrm{TFIDF}}(q,r)+(1-\alpha)S_{\mathrm{SciBERT}}(q,r),
+\end{equation}
+\noindent donde $\alpha\in[0,1]$ se seleccionó en una validación separada utilizando NDCG@10. La rejilla incluyó $\alpha=1.0$, que representa el baseline puro TF--IDF. El valor seleccionado fue $\alpha=0.8$, por lo que la representación final asignó 80\% al componente léxico y 20\% al embedding científico. SciBERT se conservó además como baseline para cuantificar su aporte.
+
+\subsection{Perfil de costos y TOPSIS}
+El catálogo calcula variables bibliométricas, económicas y editoriales. Entre ellas se encuentran SJR, H-index, cuartil ordinal, citas, documentos, razón citas/documento, rapidez editorial, semanas de publicación y APC observado o declarado en USD y PPP-USD.
+
+Para integrar preferencias, el usuario ordena las dimensiones impacto, eficiencia y flujo. El método Rank--Sum asigna pesos:
+\begin{equation}
+w_j=\frac{m-r_j+1}{\sum_{k=1}^{m}(m-r_k+1)},
+\end{equation}
+\noindent donde $m=3$ y $r_j$ es la posición de la dimensión. Por ejemplo, impacto--eficiencia--flujo produce $(0.50,0.33,0.17)$.
+
+Cada criterio se escala a $[0,1]$. Los beneficios se orientan al máximo y las fricciones o costos al mínimo. Para la matriz ponderada $V$, TOPSIS define el ideal positivo $A^+$ y el negativo $A^-$. Las distancias euclidianas son:
+\begin{equation}
+D_i^+=\sqrt{\sum_j(v_{ij}-v_j^+)^2},\qquad
+D_i^-=\sqrt{\sum_j(v_{ij}-v_j^-)^2}.
+\end{equation}
+
+El coeficiente de cercanía es:
+\begin{equation}
+CC_i=\frac{D_i^-}{D_i^++D_i^-}.
+\end{equation}
+
+Finalmente, el ranking de producción combina la afinidad temática y el perfil de calidad-costo:
+\begin{equation}
+S_{\mathrm{final}}(q,r)=0.5\,\widetilde{S}_{\text{temático}}(q,r)+0.5\,CC(r),
+\end{equation}
+\noindent donde $\widetilde{S}_{\text{temático}}$ es la versión Min--Max del score temático sobre el catálogo.
+
+La Figura~\ref{fig:modelo} muestra la ruta de cálculo de una consulta como dos ramas paralelas que se unen en el score final: la rama superior calcula la afinidad temática a partir del manuscrito y la inferior calcula el índice TOPSIS a partir del catálogo y de las preferencias del usuario. La normalización del componente temático se realizó únicamente para combinar escalas con TOPSIS; no modificó el orden relativo de las revistas dentro de ese componente. TOPSIS se reporta como una capa de utilidad implementada, no como una medida validada externamente con investigadores.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+% titulos de rama
+\node[anchor=west, font=\footnotesize\sffamily\bfseries, text=cpurple] at (0,1.25) {Afinidad temática};
+\node[anchor=west, font=\footnotesize\sffamily\bfseries, text=cteal] at (0,-1.4) {Calidad, costo y eficiencia};
+% rama temática
+\node[src, minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm] (t1) at (1.3,0) {\textbf{Manuscrito}\\[-1pt]{\scriptsize título, resumen y palabras clave}};
+\node[mod, minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm] (t2) at (4.5,0) {\textbf{Vectores}\\[-1pt]{\scriptsize TF--IDF y SciBERT (768D)}};
+\node[mod, minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm] (t3) at (7.7,0) {\textbf{Coseno y fusión}\\[-1pt]{\scriptsize $\alpha=0.8$}};
+\node[mod, minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm] (t4) at (10.9,0) {\textbf{Escala Min--Max}\\[-1pt]{\scriptsize $\widetilde{S}_{\text{temático}}$}};
+\draw[flow] (t1) -- (t2);
+\draw[flow] (t2) -- (t3);
+\draw[flow] (t3) -- (t4);
+% rama multicriterio
+\node[dat, minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm] (b1) at (1.3,-2.8) {\textbf{Catálogo Gold}\\[-1pt]{\scriptsize SJR, H-index, citas, tiempos, APC real}};
+\node[dat, minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm] (b2) at (4.5,-2.8) {\textbf{Criterios}\\[-1pt]{\scriptsize Min--Max y orientación}};
+\node[dat, minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm] (b3) at (7.7,-2.8) {\textbf{TOPSIS}\\[-1pt]{\scriptsize pesos Rank--Sum}};
+\node[dat, minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm] (b4) at (10.9,-2.8) {\textbf{Cercanía}\\[-1pt]{\scriptsize $CC_i$}};
+\draw[flow] (b1) -- (b2);
+\draw[flow] (b2) -- (b3);
+\draw[flow] (b3) -- (b4);
+% preferencias
+\node[src, minimum width=2.6cm, minimum height=1.1cm, text width=2.3cm] (pref) at (7.7,-5.1) {\textbf{Preferencias}\\[-1pt]{\scriptsize orden de impacto, eficiencia y flujo}};
+\draw[flow] (pref.north) -- (b3.south);
+\node[note, text width=2.3cm] (apcnote) at (4.5,-5.1) {APC ausente: componente no disponible};
+\draw[dashed, cgray] (apcnote.north) -- (b2.south);
+% resultado
+\node[mod, fill=cpurple!25, minimum width=2.7cm, minimum height=1.6cm, text width=2.5cm] (fin) at (14.25,-1.4) {\textbf{Ranking final}\\[-1pt]{\scriptsize $0.5\,\widetilde{S}+0.5\,CC$}\\[-1pt]{\scriptsize Top--N explicado}};
+\draw[flow] (t4.east) -| (fin.north);
+\draw[flow] (b4.east) -| (fin.south);
+\end{tikzpicture}
+\caption{Cálculo del ranking: rama temática (superior), rama multicriterio (inferior) y combinación final.}
+\label{fig:modelo}
+\end{figure}
+
+\subsection{Evaluación}
+Se realizó una partición de 80\% para desarrollo y 20\% para prueba, separando por identificador de manuscrito. El conjunto de prueba contiene 377 consultas y compite contra 246 perfiles temáticos disponibles en ese entrenamiento; el catálogo editorial completo contiene 906 revistas. Para cada consulta, el conjunto relevante binario fue el conjunto de ISSN de las revistas donde se publicó el manuscrito. Esta definición no supone que las demás revistas sean irrelevantes ni que la revista histórica sea necesariamente la mejor alternativa.
+
+La selección de $\alpha$ se realizó exclusivamente dentro del desarrollo. Primero se ajustó un perfil con 1.208 consultas y sus artículos; después se validó la rejilla $\{0.0,0.1,\ldots,0.9,1.0\}$ en 302 consultas cuyos artículos no estaban en esos perfiles. Una vez elegido el valor, se reconstruyó el perfil final con todos los artículos de desarrollo y se evaluó la prueba una sola vez. Así, ninguna consulta de validación o prueba apareció en el perfil utilizado para escoger el peso. Este protocolo de perfiles construidos solo con entrenamiento descartó la fuga entre las consultas de evaluación y sus perfiles; no fue necesario ejecutar un ajuste leave-one-out sobre el conjunto de prueba. La Figura~\ref{fig:protocolo} resume este protocolo.
+
+Para una consulta $q$, la relevancia fue binaria ($1$ si el ISSN histórico perteneció al ranking y $0$ en otro caso). Si $L_q$ es el ranking, $G_q$ el conjunto relevante y $h_q(K)=|L_q[1:K]\cap G_q|$, las métricas por consulta fueron:
+\begin{align}
+P_q@K &= \frac{h_q(K)}{K}, & R_q@K &= \frac{h_q(K)}{|G_q|}, \\
+F1_q@K &= \frac{2P_q@K R_q@K}{P_q@K+R_q@K}, & Hit_q@K &= \mathbb{1}[h_q(K)>0].
+\end{align}
+Para NDCG se usó ganancia binaria y descuento logarítmico:
+\begin{equation}
+NDCG_q@K=\frac{DCG_q@K}{IDCG_q@K},\qquad DCG_q@K=\sum_{i=1}^{K}\frac{2^{rel_{q,i}}-1}{\log_2(i+1)}.
+\end{equation}
+La precisión promedio y el rango recíproco fueron $AP_q=|G_q|^{-1}\sum_{i:rel_{q,i}=1}P_q@i$ y $RR_q=1/\operatorname{pos}_q$, respectivamente, donde $\operatorname{pos}_q$ es la posición del primer relevante y $RR_q=0$ si no aparece. Finalmente, todas las métricas se promediaron macro sobre las consultas: $MAP=n^{-1}\sum_q AP_q$ y $MRR=n^{-1}\sum_q RR_q$. Esta evaluación tuvo una sola etiqueta histórica por consulta en la mayoría de los casos, aunque el código conservó conjuntos de ISSN cuando hubo más de una.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+% fila 1
+\node[src, minimum width=3.2cm, minimum height=1.3cm, text width=2.9cm] (corpus) at (1.6,0) {\textbf{Corpus de artículos}\\[-1pt]{\scriptsize 3.786 registros}};
+\node[dat, minimum width=3.2cm, minimum height=1.3cm, text width=2.9cm] (split) at (5.73,0) {\textbf{Partición 80/20}\\[-1pt]{\scriptsize por identificador de manuscrito}};
+\node[dat, minimum width=3.2cm, minimum height=1.3cm, text width=2.9cm] (dev) at (9.86,0) {\textbf{Desarrollo}\\[-1pt]{\scriptsize 1.510 consultas}};
+\node[mod, minimum width=3.2cm, minimum height=1.3cm, text width=2.9cm] (alpha) at (13.99,0) {\textbf{Selección de $\alpha$}\\[-1pt]{\scriptsize 1.208/302, rejilla 0.0--1.0}};
+\draw[flow] (corpus) -- (split);
+\draw[flow] (split) -- (dev);
+\draw[flow] (dev) -- (alpha);
+% fila 2
+\node[dat, minimum width=3.2cm, minimum height=1.3cm, text width=2.9cm] (test) at (5.73,-2.7) {\textbf{Prueba}\\[-1pt]{\scriptsize 377 consultas}};
+\node[mod, minimum width=3.2cm, minimum height=1.3cm, text width=2.9cm] (metrics) at (9.86,-2.7) {\textbf{Métricas finales}\\[-1pt]{\scriptsize una sola vez, K = 5, 10, 20}};
+\node[mod, minimum width=3.2cm, minimum height=1.3cm, text width=2.9cm] (final) at (13.99,-2.7) {\textbf{Perfil final}\\[-1pt]{\scriptsize $\alpha^{*}=0.8$; solo entrenamiento}};
+\draw[flow] (split.south) -- (test.north);
+\draw[flow] (test.east) -- (metrics.west);
+\draw[flow] (final.west) -- (metrics.east);
+\draw[flow] (alpha.south) -- (final.north);
+\node[note, text width=3.0cm, minimum height=1.3cm] at (1.6,-2.7) {semilla 42;\\la prueba no se usa para ajustar};
+% leyenda
+\node[src, minimum width=0.45cm, minimum height=0.25cm] at (2.0,-4.4) {};
+\node[anchor=west, font=\scriptsize\sffamily] at (2.3,-4.4) {Datos de origen};
+\node[dat, minimum width=0.45cm, minimum height=0.25cm] at (5.6,-4.4) {};
+\node[anchor=west, font=\scriptsize\sffamily] at (5.9,-4.4) {Particiones};
+\node[mod, minimum width=0.45cm, minimum height=0.25cm] at (8.8,-4.4) {};
+\node[anchor=west, font=\scriptsize\sffamily] at (9.1,-4.4) {Ajuste y evaluación};
+\end{tikzpicture}
+\caption{Protocolo experimental: la selección de $\alpha$ usa solo desarrollo y la prueba se evalúa una vez con el perfil final.}
+\label{fig:protocolo}
+\end{figure}
+
+La evaluación de TOPSIS y del score final se interpreta como una evaluación de utilidad del ranking, no como una etiqueta temática adicional. En esta ejecución no se realizó validación externa de TOPSIS con investigadores. Cambiar el orden impacto--eficiencia--flujo o el presupuesto puede cambiar los pesos y la lista Top--N; por ello, la capa debe considerarse configurable y no una medida validada de calidad editorial.
+
+\subsection{Impacto matemático de combinar representaciones}
+TF--IDF y un embedding científico no describen exactamente la misma propiedad. Sea $q$ el manuscrito y $r$ una revista. El primer componente recompensa la coincidencia de términos discriminativos; el segundo aproxima la cercanía semántica entre representaciones densas. Para una consulta se obtiene el vector de scores:
+\begin{equation}
+\mathbf{s}_{\mathrm{TFIDF}}=(s_1^{T},\ldots,s_R^{T}),\qquad
+\mathbf{s}_{\mathrm{SciBERT}}=(s_1^{B},\ldots,s_R^{B}),
+\end{equation}
+\noindent donde $R$ es el número de revistas candidatas. La combinación lineal produce:
+\begin{equation}
+\mathbf{s}_{\alpha}=\alpha\mathbf{s}_{\mathrm{TFIDF}}+(1-\alpha)\mathbf{s}_{\mathrm{SciBERT}},\quad 0\leq\alpha\leq1.
+\end{equation}
+
+Para dos revistas $a$ y $b$, el orden cambia cuando cambia el signo de la diferencia:
+\begin{equation}
+\Delta_{a,b}(\alpha)=s_{\alpha,a}-s_{\alpha,b}
+=\alpha\Delta^{T}_{a,b}+(1-\alpha)\Delta^{B}_{a,b},
+\end{equation}
+\noindent con $\Delta^{T}_{a,b}=s^T_a-s^T_b$ y $\Delta^{B}_{a,b}=s^B_a-s^B_b$. Si ambos modelos prefieren la misma revista, es decir, $\Delta^T_{a,b}$ y $\Delta^B_{a,b}$ tienen el mismo signo, la fusión refuerza esa decisión. Si discrepan, la fusión actúa como un compromiso: una revista puede conservar una posición alta por coincidencia semántica aunque no comparta exactamente los términos del manuscrito, o por coincidencia léxica aunque el contexto científico sea menos próximo.
+
+La complementariedad solo puede mejorar el ranking si los errores no son perfectamente coincidentes. Formalmente, si $E_T$ y $E_B$ son los conjuntos de consultas en las que TF--IDF y SciBERT ubican la revista relevante fuera del Top--$K$, el beneficio potencial aparece cuando:
+\begin{equation}
+E_T\setminus E_B\neq\varnothing\quad\text{o}\quad
+E_B\setminus E_T\neq\varnothing.
+\end{equation}
+En ese caso, algunos valores intermedios de $\alpha$ pueden recuperar casos que un único modelo pierde. Si $E_B$ contiene casi todos los errores de TF--IDF, o si SciBERT produce scores poco discriminativos, la fusión no mejora y la validación debe llevar $\alpha$ hacia uno. Por eso no es correcto asumir que añadir embeddings mejora automáticamente las métricas.
+
+El impacto se cuantificó comparando cada variante con el mismo conjunto de prueba:
+\begin{equation}
+\delta_M(\alpha)=M(\mathbf{s}_{\alpha})-M(\mathbf{s}_{\mathrm{TFIDF}}),
+\end{equation}
+\noindent donde $M$ puede ser MRR, MAP o NDCG@K. La selección de $\alpha$ maximizó $M$ únicamente en la validación interna del desarrollo; el valor de $\delta_M$ se informó después sobre prueba. Esta separación evitó escoger el peso que favoreciera accidentalmente al conjunto final.
+
+En el presente experimento, $\alpha^*=0.8$. Por tanto:
+\begin{equation}
+\mathbf{s}_{\alpha^*}=0.8\mathbf{s}_{\mathrm{TFIDF}}+0.2\mathbf{s}_{\mathrm{SciBERT}}.
+\end{equation}
+Frente a TF--IDF, la fusión aumenta NDCG@10 de $0.6445$ a $0.6522$ ($+0.0076$), MAP de $0.6046$ a $0.6093$ ($+0.0047$) y MRR de $0.6061$ a $0.6108$ ($+0.0047$). Frente a SciBERT aislado, las ganancias son mayores: NDCG@10 aumenta en $+0.5052$, MAP en $+0.4744$ y MRR en $+0.4758$. Esto proporciona evidencia de una mejora pequeña pero medible por complementariedad en esta partición.
+
+Se calcularon Precision@K, Recall@K, F1@K, Hit Rate@K, NDCG@K, MAP y MRR para $K\in\{5,10,20\}$. No se realizó evaluación con expertos ni se usaron sus valoraciones para ajustar el modelo.
+
+\section{Resultados}
+
+\subsection{Resultados de ranking}
+La Tabla~\ref{tab:metricas} resume las métricas del reporte experimental y la Figura~\ref{fig:resultados} las compara visualmente. El alpha seleccionado fue $0.8$, por lo que el modelo fusionado incorpora una contribución del 20\% de SciBERT. SciBERT aislado obtiene un desempeño menor, pero su inclusión mejora ligeramente el ranking TF--IDF en las métricas sensibles al orden.
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas completas sobre 377 consultas de prueba y 246 candidatos.}
+\label{tab:metricas}
+\scriptsize
+\begin{tabular}{llrrrrrr}
+\toprule
+Modelo & K & P@K & R@K & F1@K & Hit@K & NDCG@K & MAP / MRR \\
+\midrule
+TF--IDF & 5  & 0.1602 & 0.7289 & 0.2597 & 0.7347 & 0.6233 & 0.6046 / 0.6061 \\
+TF--IDF & 10 & 0.0875 & 0.7939 & 0.1565 & 0.7984 & 0.6445 & 0.6046 / 0.6061 \\
+TF--IDF & 20 & 0.0479 & 0.8690 & 0.0903 & 0.8727 & 0.6641 & 0.6046 / 0.6061 \\
+SciBERT & 5  & 0.0377 & 0.1680 & 0.0608 & 0.1724 & 0.1204 & 0.1349 / 0.1350 \\
+SciBERT & 10 & 0.0276 & 0.2489 & 0.0493 & 0.2546 & 0.1469 & 0.1349 / 0.1350 \\
+SciBERT & 20 & 0.0200 & 0.3607 & 0.0378 & 0.3687 & 0.1757 & 0.1349 / 0.1350 \\
+Fusión $\alpha=.8$ & 5  & 0.1607 & 0.7298 & 0.2606 & 0.7347 & 0.6262 & 0.6093 / 0.6108 \\
+Fusión $\alpha=.8$ & 10 & 0.0894 & 0.8093 & 0.1597 & 0.8143 & 0.6522 & 0.6093 / 0.6108 \\
+Fusión $\alpha=.8$ & 20 & 0.0487 & 0.8836 & 0.0919 & 0.8886 & 0.6714 & 0.6093 / 0.6108 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  ybar, width=\linewidth, height=6.2cm, bar width=5pt,
+  symbolic x coords={NDCG@10,MAP,MRR,Hit@10}, xtick=data,
+  ymin=0, ymax=1, ytick={0,0.2,0.4,0.6,0.8,1.0},
+  enlarge x limits=0.16,
+  ymajorgrids, grid style={black!10},
+  tick label style={font=\scriptsize\sffamily},
+  legend style={at={(0.5,1.04)}, anchor=south, legend columns=3,
+                font=\scriptsize\sffamily, draw=none, /tikz/every even column/.append style={column sep=4pt}},
+]
+\addplot[draw=cgray, fill=cgray!45] coordinates {(NDCG@10,0.6445) (MAP,0.6046) (MRR,0.6061) (Hit@10,0.7984)};
+\addplot[draw=cteal, fill=cteal!45] coordinates {(NDCG@10,0.1469) (MAP,0.1349) (MRR,0.1350) (Hit@10,0.2546)};
+\addplot[draw=cpurple, fill=cpurple!55] coordinates {(NDCG@10,0.6522) (MAP,0.6093) (MRR,0.6108) (Hit@10,0.8143)};
+\legend{TF--IDF,SciBERT,Fusión}
+\end{axis}
+\end{tikzpicture}
+
+{\footnotesize (a) Métricas de orden y Hit Rate@10}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.49\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth, height=6.2cm,
+  xtick={5,10,20}, xmin=3, xmax=22, ymin=0, ymax=1,
+  ytick={0,0.2,0.4,0.6,0.8,1.0},
+  xlabel={\scriptsize\sffamily K}, ylabel={\scriptsize\sffamily Recall@K},
+  ymajorgrids, grid style={black!10},
+  tick label style={font=\scriptsize\sffamily},
+  legend style={at={(0.5,1.04)}, anchor=south, legend columns=3,
+                font=\scriptsize\sffamily, draw=none, /tikz/every even column/.append style={column sep=4pt}},
+]
+\addplot[color=cgray, mark=square*, mark size=2pt, thick] coordinates {(5,0.7289) (10,0.7939) (20,0.8690)};
+\addplot[color=cteal, mark=triangle*, mark size=2.4pt, thick, dashed] coordinates {(5,0.1680) (10,0.2489) (20,0.3607)};
+\addplot[color=cpurple, mark=*, mark size=1.8pt, thick] coordinates {(5,0.7298) (10,0.8093) (20,0.8836)};
+\legend{TF--IDF,SciBERT,Fusión}
+\end{axis}
+\end{tikzpicture}
+
+{\footnotesize (b) Recall@K}
+\end{minipage}
+\caption{Comparación de modelos sobre las 377 consultas de prueba. La fusión ($\alpha=0.8$) supera a TF--IDF por márgenes pequeños; SciBERT aislado queda muy por debajo.}
+\label{fig:resultados}
+\end{figure}
+
+Para $K=10$, el Hit Rate pasó de 0.7984 con TF--IDF a 0.8143 con la fusión, mientras el Recall pasó de 0.7939 a 0.8093. Para $K=20$, el Hit Rate pasó de 0.8727 a 0.8886 y el Recall de 0.8690 a 0.8836. La mejora fue consistente en las métricas de orden y recuperación, aunque su magnitud fue moderada. La Precision@10 fue 0.0894 para la fusión porque compitieron 246 perfiles y el conjunto relevante automático fue pequeño.
+
+\subsection{Sensibilidad de $\alpha$}
+La curva de validación se calculó en 302 consultas que no participaron en la construcción del perfil de selección. La selección maximizó NDCG@10 y mostró un máximo en $\alpha=0.8$ (Figura~\ref{fig:alpha} y Tabla~\ref{tab:alpha}):
+\begin{table}[htbp]
+\centering
+\caption{NDCG@10 en validación sin solapamiento para la rejilla de alpha.}
+\label{tab:alpha}
+\begin{tabular}{rrrrrrrrrrrr}
+\toprule
+$\alpha$ & 0.0 & 0.1 & 0.2 & 0.3 & 0.4 & 0.5 & 0.6 & 0.7 & 0.8 & 0.9 & 1.0 \\
+\midrule
+NDCG@10 & .1199 & .2074 & .3074 & .3832 & .4479 & .4962 & .5331 & .5619 & .5746 & .5733 & .5730 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.72\textwidth, height=6.4cm,
+  xmin=0, xmax=1.0, ymin=0.0, ymax=0.65,
+  xtick={0,0.2,0.4,0.6,0.8,1.0}, ytick={0,0.2,0.4,0.6},
+  xlabel={\footnotesize\sffamily $\alpha$ (peso del componente léxico)},
+  ylabel={\footnotesize\sffamily NDCG@10 (validación)},
+  ymajorgrids, grid style={black!10},
+  tick label style={font=\scriptsize\sffamily},
+]
+\addplot[color=cgray, mark=*, mark size=1.8pt, thick] coordinates {(0,0.1199) (0.1,0.2074) (0.2,0.3074) (0.3,0.3832) (0.4,0.4479) (0.5,0.4962) (0.6,0.5331) (0.7,0.5619) (0.8,0.5746) (0.9,0.5733) (1.0,0.5730)};
+\draw[dashed, cpurple] (axis cs:0.8,0.0) -- (axis cs:0.8,0.5746);
+\addplot[only marks, mark=*, mark size=3.2pt, color=cpurple] coordinates {(0.8,0.5746)};
+\node[font=\scriptsize\sffamily, text=cpurple, anchor=north east] at (axis cs:0.78,0.36) {$\alpha^{*}=0.8$};
+\node[font=\scriptsize\sffamily, text=cgray, anchor=south east, align=right] at (axis cs:1.0,0.10) {$\alpha=1.0$\\TF--IDF};
+\end{axis}
+\end{tikzpicture}
+\caption{Curva de selección de $\alpha$ en la validación sin solapamiento. El baseline $\alpha=1.0$ quedó por debajo del máximo en $\alpha=0.8$.}
+\label{fig:alpha}
+\end{figure}
+
+La curva respaldó una combinación interior: el componente SciBERT aportó información útil, pero el componente léxico conservó la mayor ponderación. Esta tabla corresponde a validación; las métricas de la Tabla~\ref{tab:metricas} fueron calculadas una sola vez sobre prueba.
+
+\subsection{Datos editoriales y APC}
+El catálogo Gold integra 906 revistas. La cobertura real de APC comprende 380 pagos observados y 25 valores declarados, 405 revistas en total (Figura~\ref{fig:apc}). Las filas restantes tienen costo no disponible y no participan en el perfil económico.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm]
+\fill[cteal!55] (0,0) rectangle (5.4525,1.0);
+\fill[cpurple!60] (5.4525,0) rectangle (5.8113,1.0);
+\fill[black!6] (5.8113,0) rectangle (13.0,1.0);
+\draw[cgray, thin] (0,0) rectangle (13.0,1.0);
+\draw[cgray, thin] (5.4525,0) -- (5.4525,1.0);
+\draw[cgray, thin] (5.8113,0) -- (5.8113,1.0);
+\node[font=\footnotesize\sffamily, text=black!85, align=center] at (2.73,0.5) {\textbf{Observado}\\[-1pt]{\scriptsize 380 \,·\, 41.9\,\%}};
+\node[font=\footnotesize\sffamily, text=black!70, align=center] at (9.4,0.5) {\textbf{No disponible}\\[-1pt]{\scriptsize 501 \,·\, 55.3\,\%\, (fuera del perfil de costos)}};
+\node[font=\scriptsize\sffamily, text=cpurple!80!black, align=center] (decl) at (5.63,2.05) {\textbf{Declarado}\\[-1pt]25 \,·\, 2.8\,\%};
+\draw[cpurple, thin] (decl.south) -- (5.63,1.0);
+\draw[decorate, decoration={brace, amplitude=5pt, mirror}, cgray] (0,-0.15) -- (5.8113,-0.15);
+\node[font=\scriptsize\sffamily, text=cgray, anchor=north] at (2.9,-0.55) {405 revistas con APC real (44.7\,\%)};
+\end{tikzpicture}
+\caption{Cobertura de APC real en el catálogo Gold (906 revistas). Los costos ausentes no se imputan.}
+\label{fig:apc}
+\end{figure}
+
+El pipeline conserva fuente, tipo de APC, fecha de proceso y variables normalizadas. El índice TOPSIS usa \texttt{apc\_monto\_ppp\_usd\_real} y deja el componente como faltante cuando no existe APC observado o declarado.
+
+\subsection{Ablación y evaluación de costos}
+La ablación temática compara tres variantes: TF--IDF, SciBERT y la fusión. La fusión mejora NDCG@10 en 0.0076, MAP en 0.0047 y MRR en 0.0047 respecto de TF--IDF. No se afirma causalidad estadística porque se dispone de una partición y no se calcularon intervalos de confianza.
+
+La capa de costos se evalúa en dos niveles. Primero, la auditoría de datos confirma que los 405 APC observados o declarados son los únicos que entran en las variables finales. Segundo, TOPSIS se somete a análisis de sensibilidad por orden de prioridades y por disponibilidad del costo. La curva de calidad frente a presupuesto y la validación humana quedan como experimentos futuros.
+
+\section{Discusión}
+Los resultados mostraron un desempeño inicial para la tarea operacional definida: recuperar la revista histórica de publicación entre 246 perfiles candidatos. Un MRR de 0.6108 indicó que, en promedio, la primera coincidencia relevante apareció relativamente cerca del inicio del ranking. El NDCG@10 de 0.6522 y el Hit Rate@10 de 0.8143 respaldaron la utilidad de la fusión como componente de recuperación, sin constituir validación editorial.
+
+La principal conclusión técnica es que SciBERT mejora modestamente al baseline cuando se combina con TF--IDF. Aunque el modelo genera embeddings válidos de 768 dimensiones, el corpus de perfiles agregados, la mezcla de idiomas, el promedio de tokens y la ausencia de fine-tuning limitan la magnitud de la mejora. El incremento de NDCG@10 de 0.0076 es positivo, pero debe verificarse con más particiones antes de considerarlo concluyente.
+
+La hipótesis de mejora por combinación se respalda en esta partición mediante el máximo interior $\alpha^*=0.8$ y un $\delta_M(\alpha^*)>0$ frente a TF--IDF. Sin embargo, la magnitud de la mejora debe verificarse mediante más particiones y no solo mediante la existencia de embeddings. El principal trabajo pendiente está en la calidad de los perfiles textuales, la cobertura multilingüe y el ajuste supervisado del encoder.
+
+El perfil TOPSIS añade una dimensión de decisión que las métricas temáticas no capturan. En producción, una revista puede subir o bajar por APC, SJR, cuartil, citas, volumen documental o tiempo editorial. Esta combinación es pertinente para investigadores colombianos, pero su efecto debe medirse en un protocolo separado que incluya restricciones de presupuesto y una referencia de relevancia compatible con el ranking híbrido.
+
+La principal limitación de validez externa es la ausencia de expertos. La revista histórica es una señal observada, no una verdad absoluta: un manuscrito puede ser pertinente para varias revistas y su publicación original pudo estar condicionada por disponibilidad, invitación o restricciones económicas. En consecuencia, las métricas deben presentarse como recuperación automática de un destino histórico y no como aceptación editorial ni como juicio de calidad científica.
+
+\section{Amenazas a la validez y reproducibilidad}
+La validez interna está limitada por una única partición aleatoria de desarrollo y prueba. Aunque el ajuste de $\alpha$ no consulta el conjunto de prueba, el valor reportado puede depender de la semilla. La mejora de la fusión debe confirmarse con varias semillas, intervalos de confianza por bootstrap y validación cruzada estratificada por disciplina.
+
+La validez de constructo también es limitada: la revista histórica funciona como señal positiva, pero no representa todas las alternativas pertinentes. Además, la cobertura de Scimago, APC y tiempos editoriales no es uniforme. TOPSIS no puede crear información ausente; una revista sin APC real queda sin componente de costo, y esa ausencia debe mostrarse al usuario.
+
+La validez externa está condicionada por la cobertura colombiana, la mezcla español-inglés y la fecha de captura. Las políticas de APC, los cuartiles y los tiempos cambian. Los PDF poseen derechos de autor, por lo que la reproducción debe distribuir hashes e identificadores, no copias de los documentos.
+
+La reproducibilidad se apoyó en el código, la semilla 42, los snapshots Bronze, los archivos Silver/Gold, el reporte JSON de métricas y los artefactos del modelo. La ejecución registró 1.510 consultas de desarrollo, 377 de prueba, 1.208 consultas de ajuste de $\alpha$, 302 de validación, 246 perfiles candidatos en prueba, 247 perfiles Gold, 3.786 artículos y 906 revistas. El perfil final persistió $\alpha=0.8$, SciBERT activado, pooling mean y 768 dimensiones.
+
+\section{Conclusiones}
+Se implementó un sistema reproducible de recomendación de revistas que integra extracción de PDFs, normalización ETL, perfiles temáticos TF--IDF/SciBERT y un índice TOPSIS de calidad, costo y eficiencia. El estado actual procesa 3.786 artículos, construye 247 perfiles temáticos y consolida 906 registros de revistas.
+
+La evaluación automática obtuvo MRR=0.6108, MAP=0.6093, NDCG@10=0.6522 y Hit Rate@10=0.8143 para la fusión con $\alpha=0.8$. Estos valores indicaron una mejora moderada frente a TF--IDF en la recuperación de la revista histórica dentro de los primeros resultados. La evaluación no permitió afirmar que el modelo fuera superior a expertos ni que las recomendaciones fueran universalmente pertinentes.
+
+El alpha seleccionado fue 0.8, por lo que la fusión incorpora 80\% de TF--IDF y 20\% de SciBERT. La mejora es pequeña pero positiva en esta partición; orienta el trabajo futuro hacia la mejora del corpus, la representación multilingüe, el fine-tuning supervisado y una validación más amplia.
+
+Como trabajo futuro se recomienda incorporar una evaluación experta con relevancia graduada, validación cruzada estratificada por disciplina, métricas de equidad presupuestal, análisis de sensibilidad de TOPSIS y filtros duros de APC, cuartil y tiempo editorial. Hasta entonces, el sistema debe utilizarse como apoyo transparente a la decisión y no como sustituto de la verificación de las políticas oficiales de cada revista.
+
+\appendix
+\section{Ecuaciones resumidas}
+Las ecuaciones centrales del sistema pueden resumirse como sigue:
+\begin{align}
+\operatorname{tfidf}(t,d)&=\operatorname{tf}(t,d)\log(N/\operatorname{df}(t)),\\
+S_T(q,r)&=\alpha S_{\mathrm{TFIDF}}(q,r)+(1-\alpha)S_{\mathrm{SciBERT}}(q,r),\\
+w_j&=\frac{m-r_j+1}{\sum_k(m-r_k+1)},\\
+D_i^{+/-}&=\sqrt{\sum_j(v_{ij}-v_j^{+/-})^2},\\
+CC_i&=\frac{D_i^-}{D_i^++D_i^-},\\
+S(q,r)&=0.5\widetilde{S}_T(q,r)+0.5CC_i.
+\end{align}
+El orden de evaluación es recuperación temática, aplicación de la disponibilidad real del costo, cálculo TOPSIS y reordenamiento final.
+
+\begin{thebibliography}{99}
+\bibitem{abbasi2020} I. I. Abbasi et al., ``A Hybrid Approach for the Recommendation of Scholarly Journals,'' en \emph{ICISCT}, IEEE, 2020.
+\bibitem{vasen2017} F. Vasen e I. Lujano Vilchis, ``Sistemas nacionales de clasificación de revistas científicas en América Latina,'' \emph{Revista Mexicana de Ciencias Políticas y Sociales}, vol. 62, no. 231, 2017.
+\bibitem{budzinski2020} O. Budzinski et al., ``Drivers of Article Processing Charges in Open Access,'' \emph{Scientometrics}, vol. 124, no. 3, 2020.
+\bibitem{huynh2022} S. T. Huynh et al., ``FPSRS: A Fusion Approach for Paper Submission Recommendation System,'' \emph{Applied Intelligence}, vol. 53, no. 8, 2022.
+\bibitem{ajmal2023} S. Ajmal et al., ``PUB-VEN: A Personalized Recommendation System for Suggesting Publication Venues,'' \emph{Multimedia Tools and Applications}, vol. 83, no. 14, 2023.
+\bibitem{thierry2023} N. Thierry, B.-K. Bao y Z. Ali, ``RAR-SB: Research Article Recommendation Using SciBERT with BiGRU,'' \emph{Scientometrics}, vol. 128, no. 12, 2023.
+\bibitem{beltagy2019} I. Beltagy, K. Lo y A. Cohan, ``SciBERT: A Pretrained Language Model for Scientific Text,'' en \emph{EMNLP}, ACL, 2019.
+\bibitem{ovono2024} G. Ovono, T. Zuva y T. Otunniyi, ``A Review of Evaluation Metrics Algorithmic Used in Scholarly Research Recommender System,'' en \emph{IMITEC}, 2024.
+\end{thebibliography}
+
+\end{document}

@@ -117,6 +117,7 @@ def evaluate_recommendations(
         metrics[f"recall@{k}"] = float(sum(r_vals) / n)
         metrics[f"f1@{k}"] = float(sum(f1_vals) / n)
         metrics[f"accuracy@{k}"] = float(sum(a_vals) / n)
+        metrics[f"hit_rate@{k}"] = metrics[f"accuracy@{k}"]
         metrics[f"ndcg@{k}"] = float(sum(ndcg_vals) / n)
 
     for ranking, relevant in zip(rankings_list, relevant_list):

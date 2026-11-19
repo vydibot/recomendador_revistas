@@ -51,7 +51,7 @@ def main() -> None:
     metadata = gold.drop_duplicates("issn_normalizado").set_index("issn_normalizado")
     columns = [
         column for column in (
-            "apc_monto_usd", "apc_tipo", "cuartil_sjr_ord", "h_index",
+            "apc_monto_usd_real", "apc_monto_ppp_usd_real", "apc_tipo", "cuartil_sjr_ord", "h_index",
             "indice_calidad_costo",
         ) if column in metadata.columns
     ]

@@ -49,6 +49,7 @@ from recomendador_revistas.data.normalization import (
     similitud_titulos,
     validar_issn_checksum,
 )
+from recomendador_revistas.analysis.indices import topsis_quality_cost_index
 
 
 def test_issn_normalization_and_checksum():
@@ -146,6 +147,21 @@ def test_continuous_scaling_zscore_minmax():
     df_minmax = escalar_minmax(df, ["sjr_score", "h_index"])
     assert df_minmax["sjr_score_minmax"].min() == 0.0
     assert df_minmax["sjr_score_minmax"].max() == 1.0
+
+
+    def test_topsis_ignores_imputed_apc_values():
+        """El costo TOPSIS solo usa APC observado/declarado, nunca imputado."""
+        df = pd.DataFrame({
+            "sjr_score_minmax": [0.2, 0.8, 0.5],
+            "h_index_minmax": [0.2, 0.8, 0.5],
+            "apc_monto_ppp_usd_real": [100.0, 200.0, np.nan],
+            "apc_monto_ppp_usd": [100.0, 200.0, 10000.0],
+        })
+
+        result = topsis_quality_cost_index(df)
+
+        assert result["indice_topsis_calidad_costo"].notna().iloc[:2].all()
+        assert pd.isna(result.loc[2, "indice_topsis_calidad_costo"])
 
 
 def test_binary_variables_and_contrasts():
