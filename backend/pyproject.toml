@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "recomendador-revistas-backend"
+version = "0.1.0"
+description = "API del catálogo de revistas y del recomendador (FastAPI)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings>=2.4",
+    "pyjwt>=2.9",
+    "python-multipart>=0.0.9",
+    # Paquete ML del monorepo (se instala aparte: pip install ../ml).
+    # Versiones fijadas porque los artefactos joblib dependen de scikit-learn.
+    "scikit-learn==1.9.1",
+    "numpy>=2.5,<2.6",
+    "pandas>=3.0,<3.1",
+    "pyarrow>=25",
+    "unidecode",
+    "transformers>=5.17,<6",
+    "torch>=2.14,<2.15",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S"]

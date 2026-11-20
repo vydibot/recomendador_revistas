@@ -206,6 +206,34 @@ def select_alpha(
     return float(best_alpha)
 
 
+def quality_scores_for(
+    identifiers: Sequence[str],
+    metadata: pd.DataFrame,
+    dimension_order: Sequence[str] = DEFAULT_ORDER,
+) -> np.ndarray:
+    """Índice TOPSIS calidad-costo alineado con ``identifiers`` (NaN si falta)."""
+    indexed = build_indices(metadata, order=dimension_order).drop_duplicates("issn_normalizado")
+    quality = indexed.set_index("issn_normalizado")["indice_topsis_calidad_costo"]
+    return np.array([float(quality.get(identifier, np.nan)) for identifier in identifiers])
+
+
+def fuse_with_quality(
+    thematic: np.ndarray,
+    quality: np.ndarray,
+    quality_weight: float = 0.5,
+) -> np.ndarray:
+    """Combina similitud temática (min-max) con calidad-costo TOPSIS.
+
+    Con ``quality_weight=0.5`` ambos componentes pesan lo mismo, que es la
+    regla usada por ``recommend`` y ``compare_journal``.
+    """
+    spread = thematic.max() - thematic.min()
+    normalized = (
+        np.full(len(thematic), 0.5) if spread == 0 else (thematic - thematic.min()) / spread
+    )
+    return (1.0 - quality_weight) * normalized + quality_weight * quality
+
+
 class ThematicProfile:
     """Perfil temático TF-IDF + SciBERT con fusión ajustable por alpha."""
 
@@ -334,17 +362,8 @@ class ThematicProfile:
                 "score_scibert": scores.scibert[order],
                 "score_tematico": scores.thematic[order],
             })
-        indexed = build_indices(metadata, order=dimension_order).drop_duplicates("issn_normalizado")
-        quality = indexed.set_index("issn_normalizado")["indice_topsis_calidad_costo"]
-        quality_scores = np.array([float(quality.get(identifier, np.nan)) for identifier in self.identifiers])
-        thematic_min = scores.thematic.min()
-        thematic_range = scores.thematic.max() - thematic_min
-        thematic_normalized = (
-            np.full(len(scores.thematic), 0.5)
-            if thematic_range == 0
-            else (scores.thematic - thematic_min) / thematic_range
-        )
-        final_scores = 0.5 * thematic_normalized + 0.5 * quality_scores
+        quality_scores = quality_scores_for(self.identifiers, metadata, dimension_order)
+        final_scores = fuse_with_quality(scores.thematic, quality_scores)
         order = np.argsort(-final_scores)[:top_k]
         return pd.DataFrame({
             "issn_normalizado": [self.identifiers[index] for index in order],
@@ -383,17 +402,8 @@ class ThematicProfile:
         final_scores = thematic_scores
         quality_scores = None
         if metadata is not None and "issn_normalizado" in metadata.columns:
-            indexed = build_indices(metadata, order=dimension_order).drop_duplicates("issn_normalizado")
-            quality = indexed.set_index("issn_normalizado")["indice_topsis_calidad_costo"]
-            quality_scores = np.array([float(quality.get(identifier, np.nan)) for identifier in self.identifiers])
-            thematic_min = thematic_scores.min()
-            thematic_range = thematic_scores.max() - thematic_min
-            thematic_normalized = (
-                np.full(len(thematic_scores), 0.5)
-                if thematic_range == 0
-                else (thematic_scores - thematic_min) / thematic_range
-            )
-            final_scores = 0.5 * thematic_normalized + 0.5 * quality_scores
+            quality_scores = quality_scores_for(self.identifiers, metadata, dimension_order)
+            final_scores = fuse_with_quality(thematic_scores, quality_scores)
 
         order = np.argsort(-final_scores)
         if exclude_self:

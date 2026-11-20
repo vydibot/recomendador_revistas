@@ -1,5 +1,6 @@
 """Modelos de representación y recomendación."""
 
+from .recommender import JournalRecommender, ModelInfo, Recommendation
 from .thematic_profile import (
 	ThematicProfile,
 	ThematicScores,
@@ -11,6 +12,9 @@ from .thematic_profile import (
 )
 
 __all__ = [
+	"JournalRecommender",
+	"ModelInfo",
+	"Recommendation",
 	"ThematicProfile",
 	"ThematicScores",
 	"build_journal_corpus",

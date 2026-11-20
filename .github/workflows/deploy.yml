@@ -1,0 +1,106 @@
+name: Deploy
+
+# Push a main -> pruebas -> imágenes en GHCR -> despliegue por SSH al servidor.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false   # nunca interrumpir un despliegue a medias
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publicar imágenes
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions: { contents: read, packages: write }
+    outputs:
+      prefix: ${{ steps.meta.outputs.prefix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: meta
+        run: echo "prefix=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.prefix }}/backend:${{ github.sha }}
+            ${{ steps.meta.outputs.prefix }}/backend:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.prefix }}/frontend:${{ github.sha }}
+            ${{ steps.meta.outputs.prefix }}/frontend:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+  deploy:
+    name: Desplegar en el servidor
+    needs: publish
+    runs-on: ubuntu-latest
+    environment: production
+    permissions: { contents: read, packages: read }
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          {
+            echo "Host server"
+            echo "  HostName $SSH_HOST"
+            echo "  User $SSH_USER"
+            echo "  Port $SSH_PORT"
+            echo "  IdentityFile ~/.ssh/id_deploy"
+            echo "  IdentitiesOnly yes"
+            echo "  StrictHostKeyChecking yes"
+          } > ~/.ssh/config
+      - name: Subir configuración de despliegue
+        run: |
+          tar -C deploy -czf - docker-compose.prod.yml caddy scripts \
+            | ssh server 'tar -xzf - -C /opt/recomendador && chmod +x /opt/recomendador/scripts/*.sh'
+      - name: Desplegar
+        env:
+          IMAGE_PREFIX: ${{ needs.publish.outputs.prefix }}
+          IMAGE_TAG: ${{ github.sha }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # El token viaja por stdin (no queda en la lista de procesos del servidor).
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh server \
+            "cd /opt/recomendador && IMAGE_PREFIX='$IMAGE_PREFIX' IMAGE_TAG='$IMAGE_TAG' GHCR_USER='$GHCR_USER' GHCR_TOKEN=\"\$(cat)\" ./scripts/deploy.sh"
+      - name: Verificar el sitio público
+        run: |
+          domain=$(ssh server "grep '^DOMAIN=' /opt/recomendador/.env | cut -d= -f2")
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://$domain/api/health" || true)
+            if [ "$code" = "200" ]; then echo "https://$domain responde 200"; exit 0; fi
+            sleep 5
+          done
+          echo "https://$domain no respondió 200"; exit 1

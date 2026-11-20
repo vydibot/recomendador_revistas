@@ -7,22 +7,21 @@ name = "recomendador-revistas"
 version = "0.1.0"
 description = "Pipeline y modelos para recomendación de revistas científicas"
 requires-python = ">=3.12"
+# Dependencias mínimas para cargar el modelo y servir recomendaciones (las usa
+# el backend). El ETL y el entrenamiento requieren los extras ``etl`` y ``nlp``.
 dependencies = [
     "pandas",
     "numpy",
     "scikit-learn",
     "pyarrow",
-    "rapidfuzz",
     "unidecode",
-    "lingua-language-detector",
-    "pypdf",
-    "fonttools",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
-nlp = ["scikit-learn", "transformers", "torch"]
+etl = ["rapidfuzz", "lingua-language-detector", "pypdf", "fonttools"]
+nlp = ["transformers", "torch"]
 pdf = ["pymupdf", "pillow", "pytesseract"]
+dev = ["pytest"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

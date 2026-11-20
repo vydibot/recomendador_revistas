@@ -1,25 +1,34 @@
-# Recomendador de revistas
+# Módulo ML — Recomendador de revistas
+
+> Este directorio es el **módulo de datos y modelos** del monorepo. La aplicación web
+> (backend, frontend, despliegue) vive en la raíz: ver [`../README.md`](../README.md).
 
 Pipeline ETL medallion para consolidar Publindex, DOAJ, Scimago, OpenAPC y el registro Facts de pagos APC.
 
 La estructura profesional se encuentra en `src/recomendador_revistas/`.
 La arquitectura separa ETL, modelos TF-IDF, SciBERT, análisis APC/índices y
-evaluación. Consulta `docs/architecture.md` para el mapa del repositorio.
+evaluación. El informe técnico (paper y TOPSIS) está en [`../docs/informe/`](../docs/informe/).
 
 ## Instalacion
 
 ```bash
 python -m venv .venv
-.venv/bin/python -m pip install -e ".[dev]"
+.venv/bin/python -m pip install -e ".[etl,dev]"
 ```
 
 Para instalar también las dependencias opcionales de modelos NLP:
 
 ```bash
-.venv/bin/python -m pip install -e ".[dev,nlp]"
+.venv/bin/python -m pip install -e ".[etl,dev,nlp]"
 ```
 
-El pipeline requiere `pyarrow` para escribir y leer Parquet.
+Las dependencias base (pandas, scikit-learn, pyarrow, unidecode) bastan para
+**cargar el modelo y recomendar** (es lo que instala el backend). El ETL necesita
+el extra `etl` y el entrenamiento/SciBERT el extra `nlp`.
+
+Para servir el modelo en una API usa `recomendador_revistas.models.JournalRecommender`
+(`models/recommender.py`): precalcula el TOPSIS por cada orden de prioridades y
+solo hace similitud coseno por consulta.
 
 ## Ejecucion
 
@@ -50,8 +59,9 @@ La tabla de tasas y cobertura de monedas se genera en
 - Silver: datos tipados y normalizados por fuente.
 - Gold: catálogo maestro, features y `merge_log.csv`.
 
-Las reglas y el esquema están en `docs/normalization_rules.md` y
-`docs/diccionario_datos.md`.
+Las reglas de normalización están en `src/recomendador_revistas/data/normalization.py`
+y `etl/`; la metodología del índice calidad-costo en
+[`../docs/informe/implementacion_topsis.md`](../docs/informe/implementacion_topsis.md).
 
 ## Artículos (bronze/papers)
 
@@ -121,7 +131,7 @@ Flujo recomendado completo:
 
 # 6. Compilar el paper corregido
 latexmk -pdf -interaction=nonstopmode -halt-on-error \
-  -outdir=informe/build informe/paper.tex
+  -outdir=../docs/informe/build ../docs/informe/paper.tex
 ```
 
 La evaluación informa `train_queries=1510`, `alpha_fit_queries=1208`,

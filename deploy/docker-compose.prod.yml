@@ -1,0 +1,68 @@
+# Stack de producción: se ejecuta en el servidor con imágenes ya construidas por CI (GHCR).
+#   cd /opt/recomendador && ./scripts/deploy.sh
+name: recomendador
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?define DOMAIN en .env}
+      ACME_EMAIL: ${ACME_EMAIL:?define ACME_EMAIL en .env}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data     # certificados: no perderlos (límite de emisión de Let's Encrypt)
+      - caddy_config:/config
+    depends_on:
+      backend: { condition: service_healthy }
+      frontend: { condition: service_started }
+    logging: *logging
+
+  frontend:
+    image: ${IMAGE_PREFIX:?}/frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    logging: *logging
+
+  backend:
+    image: ${IMAGE_PREFIX:?}/backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://recomendador:${POSTGRES_PASSWORD:?}@db:5432/recomendador
+      SECRET_KEY: ${SECRET_KEY:?}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      CORS_ORIGINS: "[]"   # mismo origen detrás de Caddy
+    depends_on:
+      db: { condition: service_healthy }
+    mem_limit: 3g
+    logging: *logging
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: recomendador
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: recomendador
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recomendador -d recomendador"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

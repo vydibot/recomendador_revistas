@@ -1,0 +1,26 @@
+# Contexto de build: la raíz del monorepo. Se excluye todo lo pesado o ajeno a las imágenes.
+**/.git
+**/.venv
+**/.venv_local
+**/__pycache__
+**/*.pyc
+**/node_modules
+**/dist
+**/.pytest_cache
+**/.ruff_cache
+.vscode
+.env
+.env.*
+"LIDER APP"
+docs
+informe
+backend/*.db
+backend/tests
+frontend/src/**/*.test.*
+
+# Datos del pipeline ML que la imagen no necesita (solo usa artefactos + Gold maestro)
+ml/src/recomendador_revistas/data/bronze
+ml/src/recomendador_revistas/data/silver
+ml/src/recomendador_revistas/logs
+ml/src/recomendador_revistas/reports
+ml/tests
