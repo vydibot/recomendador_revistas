@@ -66,6 +66,16 @@ jobs:
       SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validar secretos de despliegue
+        run: |
+          missing=0
+          for v in SSH_HOST SSH_USER SSH_PRIVATE_KEY SSH_KNOWN_HOSTS; do
+            if [ -z "${!v}" ]; then
+              echo "::error title=Falta el secreto $v::Créalo en Settings → Secrets and variables → Actions (como secreto del repositorio o del environment 'production'). Ver docs/despliegue.md"
+              missing=1
+            fi
+          done
+          exit $missing
       - name: Preparar SSH
         run: |
           install -m 700 -d ~/.ssh
